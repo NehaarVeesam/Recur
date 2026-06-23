@@ -1,0 +1,18 @@
+Title: Valid Parentheses
+Date: 2026-06-21
+Difficulty: Easy
+Tags: Stack, String
+Platform: LeetCode
+Favorite: true
+Status: Revised
+
+Statement:
+Given a string s containing just the characters '(', ')', '{', '}', '[' and ']', determine if the input string is valid.
+
+Approach: Using a Stack
+Time Complexity: O(n)
+Space Complexity: O(n)
+Iterate through the string. Push open brackets to a stack. If a closing bracket is encountered, check if it matches the open bracket at the top of the stack. If not, return false.
+
+Learning:
+Stacks are the canonical data structure for LIFO operations like validating nested structures or parsing expression trees.

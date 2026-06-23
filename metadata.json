@@ -1,0 +1,6 @@
+{
+  "name": "DSA Learning Hub",
+  "description": "A developer-focused Personal DSA Learning Hub designed for tracking problem-solving patterns and storing solutions locally.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}

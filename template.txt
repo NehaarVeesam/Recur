@@ -1,0 +1,39 @@
+Title: Two Sum
+Date: 2026-06-23
+Time: 14:30
+Difficulty: Easy
+Tags: Array, HashMap
+Platform: LeetCode
+Favorite: false
+Status: Need Revision
+Last Revised: 2026-06-25
+
+Statement:
+Given an array of integers nums and an integer target, return indices of the two numbers such that they add up to target.
+
+Approach: Brute Force
+Time Complexity: O(n^2)
+Space Complexity: O(1)
+Use two nested loops to check every pair.
+
+Approach: Hash Map (Optimal)
+Time Complexity: O(n)
+Space Complexity: O(n)
+Store complements in a hash map while iterating.
+
+Learning:
+Complement lookup reduces time from O(n^2) to O(n).
+
+Mistakes:
+- Forgot to handle duplicate values
+- Didn't consider empty array edge case
+
+Code:
+def two_sum(nums: list[int], target: int) -> list[int]:
+    seen = {}
+    for i, num in enumerate(nums):
+        comp = target - num
+        if comp in seen:
+            return [seen[comp], i]
+        seen[num] = i
+    return []

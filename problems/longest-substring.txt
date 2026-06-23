@@ -1,0 +1,23 @@
+Title: Longest Substring Without Repeating Characters
+Date: 2026-06-22
+Difficulty: Medium
+Tags: String, Sliding Window, HashMap
+Platform: LeetCode
+Favorite: false
+Status: Need Revision
+
+Statement:
+Given a string s, find the length of the longest substring without repeating characters.
+
+Approach: Sliding Window with Set
+Time Complexity: O(n)
+Space Complexity: O(min(m, n))
+Use two pointers (left and right) to represent a window. Iterate through the string with the right pointer. If the character is in the set, remove characters from the left until the duplicate is gone.
+
+Approach: Optimized Sliding Window with Map
+Time Complexity: O(n)
+Space Complexity: O(min(m, n))
+Instead of shifting the left pointer by 1 step at a time, use a Map to store the exact index of the duplicate. Skip the left pointer directly to duplicateIndex + 1.
+
+Learning:
+Sliding window is perfectly suited for "longest/shortest contiguous subarray/substring" problems. Skipping the left pointer saves unnecessary iteration!
