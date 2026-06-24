@@ -31,7 +31,7 @@ export const AnalyticsDashboard: React.FC = () => {
   }, [problems]);
 
   return (
-    <div className="p-8 animate-in fade-in slide-in-from-bottom-2 duration-300">
+    <div className="p-4 sm:p-6 md:p-8 animate-in fade-in slide-in-from-bottom-2 duration-300 max-w-7xl mx-auto w-full">
       <div className="mb-8">
         <h2 className="text-2xl font-bold text-white">Analytics Dashboard</h2>
         <p className="text-slate-400 mt-1">Track your DSA progress and insights over time.</p>

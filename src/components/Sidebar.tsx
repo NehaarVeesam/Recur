@@ -25,7 +25,7 @@ export const Sidebar: React.FC = () => {
   ] as const;
 
   return (
-    <div className="w-64 bg-[#080808] border-r border-white/5 h-screen flex flex-col">
+    <div className="w-64 bg-[#080808] border-r border-white/5 h-full min-h-dvh flex flex-col">
       <div className="p-6 border-b border-white/5 flex items-center gap-3">
         <div className="w-8 h-8 rounded-lg bg-indigo-500/20 flex items-center justify-center border border-indigo-500/40 shrink-0">
           <RepeatIcon className="w-5 h-5 text-indigo-400" />

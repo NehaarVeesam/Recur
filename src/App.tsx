@@ -35,7 +35,7 @@ const RootLayout = () => {
   const { isSidebarOpen, setIsSidebarOpen } = useData();
 
   return (
-    <div className="flex h-screen bg-[#050505] text-slate-300 font-sans overflow-hidden relative">
+    <div className="flex min-h-dvh h-dvh bg-[#050505] text-slate-300 font-sans overflow-hidden relative safe-area-x">
       {/* Mobile overlay */}
       {isSidebarOpen && (
         <div 
@@ -61,7 +61,10 @@ export default function App() {
     <DataProvider>
       <RootLayout />
       <Toaster 
-        position="bottom-right" 
+        position="bottom-center"
+        containerStyle={{
+          bottom: 'max(1rem, env(safe-area-inset-bottom))',
+        }}
         toastOptions={{
           style: {
             background: '#111',

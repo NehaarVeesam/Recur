@@ -4,7 +4,7 @@ import { useData } from '../context/DataContext';
 import {
   ArrowLeftIcon, ClockIcon, CalendarIcon, TagIcon, StarIcon, LayoutIcon, CodeIcon,
   BookOpenIcon, AlertTriangleIcon, Edit3Icon, Trash2Icon, Maximize2Icon, CopyIcon,
-  SaveIcon, XIcon, PlusIcon, Wand2Icon,
+  SaveIcon, XIcon, PlusIcon, Wand2Icon, MenuIcon,
 } from 'lucide-react';
 import { cn } from '../utils/cn';
 import { CODE_LANGUAGE, PYTHON_EDITOR_OPTIONS } from '../utils/codeEditor';
@@ -62,7 +62,7 @@ const TabEditBar: React.FC<{
 );
 
 export const ProblemDetailView: React.FC = () => {
-  const { selectedProblemInfo, setSelectedProblemInfo, saveProblem, deleteProblem } = useData();
+  const { selectedProblemInfo, setSelectedProblemInfo, saveProblem, deleteProblem, setIsSidebarOpen } = useData();
   const [activeTab, setActiveTab] = useState<TabId>('overview');
   const [editingTab, setEditingTab] = useState<EditableTab | null>(null);
   const [isFullscreenCode, setIsFullscreenCode] = useState(false);
@@ -469,14 +469,16 @@ export const ProblemDetailView: React.FC = () => {
             <TabEditBar isEditing={codeEditing} onEdit={() => startEdit('code')} onSave={handleSaveTab} onCancel={cancelEdit} />
             <div className={cn(
               'bg-[#010101] border border-white/5 rounded-xl overflow-hidden flex flex-col',
-              isFullscreenCode ? 'fixed inset-4 z-50 shadow-2xl' : 'h-[600px]'
+              isFullscreenCode
+                ? 'fixed z-50 shadow-2xl inset-2 sm:inset-4 safe-area-x safe-area-top safe-area-bottom'
+                : 'h-[min(60dvh,600px)] min-h-[280px]'
             )}>
-              <div className="flex items-center justify-between px-4 py-3 border-b border-white/5 bg-white/5">
-                <div className="flex items-center gap-2 text-slate-400">
-                  <CodeIcon className="w-4 h-4" />
-                  <span className="text-sm font-mono">Python · {p.filename}{codeEditing ? ' (editing)' : ''}</span>
+              <div className="flex items-center justify-between gap-2 px-3 sm:px-4 py-3 border-b border-white/5 bg-white/5">
+                <div className="flex items-center gap-2 text-slate-400 min-w-0">
+                  <CodeIcon className="w-4 h-4 shrink-0" />
+                  <span className="text-xs sm:text-sm font-mono truncate">Python · {p.filename}{codeEditing ? ' (editing)' : ''}</span>
                 </div>
-                <div className="flex items-center gap-2">
+                <div className="flex items-center gap-1 sm:gap-2 shrink-0">
                   <button
                     onClick={handleFormatCode}
                     disabled={formatting || (!codeEditing && !p.code.trim())}
@@ -571,20 +573,29 @@ export const ProblemDetailView: React.FC = () => {
   };
 
   return (
-    <div className="h-full flex flex-col bg-[#0A0A0A]">
-      <div className="flex-none px-8 py-6 border-b border-white/5 bg-[#0A0A0A]/50 backdrop-blur z-10 sticky top-0">
-        <button
-          onClick={() => setSelectedProblemInfo(null)}
-          className="flex items-center gap-2 text-slate-400 hover:text-white text-sm mb-6 transition-colors group"
-        >
-          <ArrowLeftIcon className="w-4 h-4 group-hover:-translate-x-1 transition-transform" />
-          Back to Problems
-        </button>
+    <div className="h-full flex flex-col bg-[#0A0A0A] min-w-0">
+      <div className="flex-none px-4 sm:px-6 md:px-8 py-4 sm:py-6 border-b border-white/5 bg-[#0A0A0A]/50 backdrop-blur z-10 sticky top-0 safe-area-top">
+        <div className="flex items-center gap-2 mb-4 sm:mb-6">
+          <button
+            className="md:hidden p-2 -ml-2 text-slate-400 hover:text-white rounded-lg shrink-0"
+            onClick={() => setIsSidebarOpen(true)}
+            aria-label="Open menu"
+          >
+            <MenuIcon className="w-5 h-5" />
+          </button>
+          <button
+            onClick={() => setSelectedProblemInfo(null)}
+            className="flex items-center gap-2 text-slate-400 hover:text-white text-sm transition-colors group"
+          >
+            <ArrowLeftIcon className="w-4 h-4 group-hover:-translate-x-1 transition-transform" />
+            Back to Problems
+          </button>
+        </div>
 
         <div className="flex flex-col md:flex-row md:items-start justify-between gap-4">
-          <div>
-            <div className="flex flex-wrap items-center gap-3 mb-2">
-              <h1 className="text-3xl font-bold text-white tracking-tight">{p.title || p.filename}</h1>
+          <div className="min-w-0">
+            <div className="flex flex-wrap items-center gap-2 sm:gap-3 mb-2">
+              <h1 className="text-xl sm:text-2xl md:text-3xl font-bold text-white tracking-tight break-words">{p.title || p.filename}</h1>
               <button onClick={handleToggleFavorite} className="text-slate-500 hover:text-amber-500 transition-colors" disabled={!!editingTab}>
                 <StarIcon className={cn('w-6 h-6', p.favorite && 'fill-amber-500 text-amber-500')} />
               </button>
@@ -609,7 +620,7 @@ export const ProblemDetailView: React.FC = () => {
           </div>
         </div>
 
-        <div className="flex items-center gap-6 mt-8 overflow-x-auto no-scrollbar">
+        <div className="flex items-center gap-4 sm:gap-6 mt-6 sm:mt-8 overflow-x-auto no-scrollbar -mx-1 px-1">
           {(['overview', 'approach', 'learning', 'mistakes', 'code', 'revision'] as const).map(tab => (
             <button
               key={tab}
@@ -628,7 +639,7 @@ export const ProblemDetailView: React.FC = () => {
         </div>
       </div>
 
-      <div className="flex-1 overflow-y-auto p-8 relative">
+      <div className="flex-1 overflow-y-auto overflow-x-hidden p-4 sm:p-6 md:p-8 relative max-w-5xl w-full mx-auto">
         {isFullscreenCode && <div className="fixed inset-0 bg-black/80 backdrop-blur-sm z-40" onClick={() => setIsFullscreenCode(false)} />}
         {renderTabContent()}
       </div>

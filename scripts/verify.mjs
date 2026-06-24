@@ -60,8 +60,6 @@ async function testApi(baseUrl) {
   assert('GET /api/problems', listRes.ok);
   const problems = await listRes.json();
   assert('returns array', Array.isArray(problems));
-  assert('has problem files', problems.length > 0);
-  assert('files have content', problems.every(p => (p.content || '').trim().length > 0));
 
   const testFile = `verify-test-${Date.now()}.txt`;
   const testContent = `Title: Verify Test\nDate: 2026-06-23\nDifficulty: Easy\nTags: Test\nFavorite: false\nStatus: Need Revision\n\nStatement:\nTest.\n\nLearning:\n\n\nCode:\n`;
@@ -71,6 +69,11 @@ async function testApi(baseUrl) {
     body: JSON.stringify({ content: testContent }),
   });
   assert('POST create', createRes.ok);
+
+  const listAfterCreate = await fetch(`${baseUrl}/api/problems`);
+  const problemsAfterCreate = await listAfterCreate.json();
+  assert('create appears in list', problemsAfterCreate.some(p => p.filename === testFile));
+  assert('created file has content', problemsAfterCreate.find(p => p.filename === testFile)?.content?.trim().length > 0);
 
   const badRes = await fetch(`${baseUrl}/api/problems/bad.json`, {
     method: 'POST',

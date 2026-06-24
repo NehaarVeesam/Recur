@@ -35,7 +35,9 @@ Use the `PORT` environment variable to change the listen port (default `3000`).
 
 ## Data Storage
 
-Problem logs are saved in the `problems/` directory at the project root. Files use a simple key–section format (`Title:`, `Statement:`, `Approach:`, `Learning:`, `Mistakes:`, `Code:`, etc.). See [`template.txt`](template.txt) for a complete example.
+Problem logs are saved in the `problems/` directory at the project root. The app starts with an empty journal — add problems from the UI or by creating `.txt` files yourself. To load optional demo entries, run `npm run restore-seed`.
+
+Files use a simple key–section format (`Title:`, `Statement:`, `Approach:`, `Learning:`, `Mistakes:`, `Code:`, etc.). See [`template.txt`](template.txt) for a complete example.
 
 External edits to `.txt` files are supported — refresh the browser to load changes made outside the app.
 

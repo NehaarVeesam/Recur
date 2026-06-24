@@ -1,6 +1,9 @@
 import fs from 'fs/promises';
 import path from 'path';
 
+// Optional: writes demo problem files into problems/ when missing or nearly empty.
+// Not run automatically — use `npm run restore-seed` if you want sample data.
+
 const DATA_DIR = path.join(process.cwd(), 'problems');
 
 const examples = [
