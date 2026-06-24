@@ -1,0 +1,49 @@
+Title: Maximum Number of Balloons
+Date: 2026-06-22
+Difficulty: Easy
+Tags: String, Hash Map, Counting
+Platform: LeetCode - 1189
+Favorite: false
+Status: Need Revision
+
+Statement:
+Given a string text, you want to use the characters of text to form as many instances of the word "balloon" as possible.
+You can use each character in text at most once. Return the maximum number of instances that can be formed.
+
+Approach: Hash Map Frequency Counting
+Time Complexity: O(n)
+Space Complexity: O(1)
+1. Create a dictionary consisting of keys -> d = { b,a,l,o,n }
+2. Iterate over the given string and create a hash map for each character -> freq = {}
+3. As there are 2 'l' and 2 'o' , to generate exactly balloons we need to divide them by 2
+4. Minimum of values of dictionary will be the answer.
+
+Learning:
+1. To find out the frequency of word in a string - should take care of repeated characters 
+2. Proper Initialization of dictionary.
+
+Mistakes:
+1. Didn't divide the repeated characters with their frequency in target string which in turn effects total count 
+2. Didn't initialize dictionary with 0 as initial count - which inturn effect case where answer is 0
+
+Code:
+# Hash Map Frequency Counting
+def maxNumberOfBalloons(self, text: str) -> int:
+    d = {
+        'b':0,
+        'a':0,
+        'l':0,
+        'o':0,
+        'n':0
+    }
+    for i in range(len(text)):
+        ch = text[i]
+        if ch in 'balloon':
+            if ch in d:
+                d[ch] += 1
+            else:
+                d[ch] = 1
+    d['l'] = d['l'] // 2 
+    d['o'] = d['o'] // 2 
+    ans = min(d.values())
+    return ans

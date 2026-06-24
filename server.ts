@@ -80,12 +80,37 @@ async function startServer() {
       if (!filename.endsWith('.txt')) {
         return res.status(400).json({ error: "Must be a .txt file" });
       }
-      const { content } = req.body;
+      const { content, renameTo } = req.body;
       if (typeof content !== "string") {
         return res.status(400).json({ error: "Content must be a string" });
       }
-      await fs.writeFile(path.join(DATA_DIR, filename), content, "utf-8");
-      res.json({ success: true });
+
+      const targetFilename =
+        typeof renameTo === "string" && renameTo.endsWith(".txt") && renameTo !== filename
+          ? renameTo
+          : filename;
+
+      if (targetFilename !== filename) {
+        const newPath = path.join(DATA_DIR, targetFilename);
+        try {
+          await fs.access(newPath);
+          return res.status(409).json({ error: "A problem with that filename already exists" });
+        } catch {
+          // available
+        }
+      }
+
+      await fs.writeFile(path.join(DATA_DIR, targetFilename), content, "utf-8");
+
+      if (targetFilename !== filename) {
+        try {
+          await fs.unlink(path.join(DATA_DIR, filename));
+        } catch {
+          // old draft file may already be gone
+        }
+      }
+
+      res.json({ success: true, filename: targetFilename });
     } catch (e) {
       console.error(e);
       res.status(500).json({ error: "Failed to write problem" });

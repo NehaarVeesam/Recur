@@ -7,7 +7,7 @@ interface DataContextType {
   loading: boolean;
   error: string | null;
   refresh: () => Promise<void>;
-  saveProblem: (problem: Partial<Problem> & { filename: string }) => Promise<void>;
+  saveProblem: (problem: Partial<Problem> & { filename: string; renameTo?: string }) => Promise<string>;
   deleteProblem: (filename: string) => Promise<void>;
   createNewProblem: () => Promise<void>;
   
@@ -26,6 +26,8 @@ interface DataContextType {
   setFilterDifficulty: (d: string | null) => void;
   isSidebarOpen: boolean;
   setIsSidebarOpen: (b: boolean) => void;
+  createModeFilename: string | null;
+  setCreateModeFilename: (filename: string | null) => void;
 }
 
 const DataContext = createContext<DataContextType | null>(null);
@@ -48,6 +50,7 @@ export const DataProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const [sortBy, setSortBy] = useState<'newest' | 'oldest' | 'a-z' | 'z-a' | 'difficulty'>('newest');
   const [filterDifficulty, setFilterDifficulty] = useState<string | null>(null);
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
+  const [createModeFilename, setCreateModeFilename] = useState<string | null>(null);
 
   const fetchProblems = async (silent = false) => {
     try {
@@ -71,7 +74,7 @@ export const DataProvider: React.FC<{ children: React.ReactNode }> = ({ children
     fetchProblems();
   }, []);
 
-  const saveProblem = async (problemData: Partial<Problem> & { filename: string }) => {
+  const saveProblem = async (problemData: Partial<Problem> & { filename: string; renameTo?: string }) => {
     try {
       const existing = problems.find(p => p.filename === problemData.filename)
         ?? (selectedProblemInfo?.filename === problemData.filename ? selectedProblemInfo : undefined);
@@ -96,21 +99,33 @@ export const DataProvider: React.FC<{ children: React.ReactNode }> = ({ children
       const res = await fetch(`/api/problems/${problemData.filename}`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ content })
+        body: JSON.stringify({
+          content,
+          renameTo: problemData.renameTo,
+        }),
       });
-      if (!res.ok) throw new Error('Failed to save');
+      if (!res.ok) {
+        const data = await res.json().catch(() => ({}));
+        throw new Error(data.error || 'Failed to save');
+      }
+      const { filename: savedFilename } = await res.json();
+      const finalFilename = savedFilename || problemData.filename;
 
-      const updated = parseProblem(problemData.filename, content);
+      const updated = parseProblem(finalFilename, content);
       setSelectedProblemInfo(prev =>
         prev?.filename === problemData.filename ? updated : prev
       );
-      setProblems(prev =>
-        prev.some(p => p.filename === problemData.filename)
-          ? prev.map(p => (p.filename === problemData.filename ? updated : p))
-          : [...prev, updated]
-      );
+      setProblems(prev => {
+        const rest = prev.filter(p => p.filename !== problemData.filename && p.filename !== finalFilename);
+        return [...rest, updated];
+      });
 
-      toast.success('Saved successfully');
+      toast.success(
+        problemData.renameTo && finalFilename !== problemData.filename
+          ? `Saved as ${finalFilename}`
+          : 'Saved successfully'
+      );
+      return finalFilename;
     } catch (e: any) {
       toast.error(e.message || 'Failed to save');
       throw e;
@@ -135,31 +150,26 @@ export const DataProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const createNewProblem = async () => {
     try {
     const filename = `new-problem-${Date.now()}.txt`;
-    const content = `Title: New Problem
-Date: ${new Date().toISOString().split('T')[0]}
+    const today = new Date().toISOString().split('T')[0];
+    const content = `Title: 
+Date: ${today}
 Difficulty: Easy
-Tags: Array
-Platform: LeetCode
+Tags: 
+Platform: 
 Favorite: false
 Status: Need Revision
 
 Statement:
-Describe the problem here.
 
 Approach: Approach 1
-Time Complexity: O(n)
-Space Complexity: O(1)
-Explain your approach here.
+Time Complexity: 
+Space Complexity: 
 
 Learning:
-What did you learn from this problem?
 
 Mistakes:
-What went wrong? Wrong approaches, bugs, edge cases missed...
 
 Code:
-def solve():
-    pass
 `;
     const res = await fetch(`/api/problems/${filename}`, {
       method: 'POST',
@@ -170,11 +180,10 @@ def solve():
 
     await fetchProblems(true);
     
-    // Auto-select the newly created problem
     const newProb = parseProblem(filename, content);
+    setCreateModeFilename(filename);
     setSelectedProblemInfo(newProb);
-    setCurrentView('all'); // switch to all view to show the new problem context
-    toast.success('Successfully created new problem');
+    setCurrentView('all');
     } catch (e: any) {
       toast.error(e.message || 'Failed to create new problem');
       throw e;
@@ -190,7 +199,8 @@ def solve():
       selectedProblemInfo, setSelectedProblemInfo,
       sortBy, setSortBy,
       filterDifficulty, setFilterDifficulty,
-      isSidebarOpen, setIsSidebarOpen
+      isSidebarOpen, setIsSidebarOpen,
+      createModeFilename, setCreateModeFilename,
     }}>
       {children}
     </DataContext.Provider>

@@ -7,6 +7,7 @@ import {
   SaveIcon, XIcon, PlusIcon, Wand2Icon, MenuIcon,
 } from 'lucide-react';
 import { cn } from '../utils/cn';
+import { titleToFilename, isDraftFilename } from '../utils/filename';
 import { CODE_LANGUAGE, PYTHON_EDITOR_OPTIONS } from '../utils/codeEditor';
 import Editor from '@monaco-editor/react';
 import toast from 'react-hot-toast';
@@ -30,10 +31,11 @@ const textareaClass =
 
 const TabEditBar: React.FC<{
   isEditing: boolean;
+  createMode?: boolean;
   onEdit: () => void;
   onSave: () => void;
   onCancel: () => void;
-}> = ({ isEditing, onEdit, onSave, onCancel }) => (
+}> = ({ isEditing, createMode, onEdit, onSave, onCancel }) => (
   <div className="flex justify-end gap-2 mb-4">
     {isEditing ? (
       <>
@@ -41,7 +43,7 @@ const TabEditBar: React.FC<{
           onClick={onCancel}
           className="flex items-center gap-1.5 px-3 py-1.5 text-xs text-slate-400 border border-white/10 rounded-lg hover:bg-white/5 transition-colors"
         >
-          <XIcon className="w-3.5 h-3.5" /> Cancel
+          <XIcon className="w-3.5 h-3.5" /> {createMode ? 'Done' : 'Cancel'}
         </button>
         <button
           onClick={onSave}
@@ -62,7 +64,7 @@ const TabEditBar: React.FC<{
 );
 
 export const ProblemDetailView: React.FC = () => {
-  const { selectedProblemInfo, setSelectedProblemInfo, saveProblem, deleteProblem, setIsSidebarOpen } = useData();
+  const { selectedProblemInfo, setSelectedProblemInfo, saveProblem, deleteProblem, setIsSidebarOpen, createModeFilename, setCreateModeFilename, problems } = useData();
   const [activeTab, setActiveTab] = useState<TabId>('overview');
   const [editingTab, setEditingTab] = useState<EditableTab | null>(null);
   const [isFullscreenCode, setIsFullscreenCode] = useState(false);
@@ -77,18 +79,53 @@ export const ProblemDetailView: React.FC = () => {
   const [formatting, setFormatting] = useState(false);
 
   useEffect(() => {
+    if (!selectedProblemInfo) return;
+    if (createModeFilename === selectedProblemInfo.filename) {
+      setOverviewDraft({
+        title: '',
+        statement: '',
+        tagsInput: '',
+        difficulty: 'Easy',
+        platform: '',
+        date: selectedProblemInfo.date || new Date().toISOString().split('T')[0],
+      });
+      setApproachesDraft([{ title: 'Approach 1', timeComplexity: '', spaceComplexity: '', content: '' }]);
+      setLearningDraft('');
+      setMistakesDraft('');
+      setCodeDraft('');
+      setActiveTab('overview');
+    }
+  }, [selectedProblemInfo?.filename, createModeFilename]);
+
+  useEffect(() => {
+    if (createModeFilename === selectedProblemInfo?.filename) return;
     setEditingTab(null);
     setOverviewDraft(null);
     setApproachesDraft(null);
     setLearningDraft(null);
     setMistakesDraft(null);
     setCodeDraft(null);
-  }, [activeTab, selectedProblemInfo?.filename]);
+  }, [activeTab, selectedProblemInfo?.filename, createModeFilename]);
 
   if (!selectedProblemInfo) return null;
   const p = selectedProblemInfo;
+  const createMode = createModeFilename === p.filename;
+
+  const exitCreateMode = () => {
+    setCreateModeFilename(null);
+    setEditingTab(null);
+    setOverviewDraft(null);
+    setApproachesDraft(null);
+    setLearningDraft(null);
+    setMistakesDraft(null);
+    setCodeDraft(null);
+  };
 
   const cancelEdit = () => {
+    if (createMode) {
+      exitCreateMode();
+      return;
+    }
     setEditingTab(null);
     setOverviewDraft(null);
     setApproachesDraft(null);
@@ -129,11 +166,57 @@ export const ProblemDetailView: React.FC = () => {
     }
   };
 
-  const handleSaveTab = async () => {
-    if (!editingTab || saving) return;
+  const handleSaveAll = async () => {
+    if (
+      saving ||
+      !overviewDraft ||
+      approachesDraft === null ||
+      learningDraft === null ||
+      mistakesDraft === null ||
+      codeDraft === null
+    ) {
+      return;
+    }
+    if (!overviewDraft.title.trim()) {
+      toast.error('Please enter a problem title');
+      setActiveTab('overview');
+      return;
+    }
     setSaving(true);
     try {
-      switch (editingTab) {
+      const renameTo = isDraftFilename(p.filename)
+        ? titleToFilename(overviewDraft.title, problems.map(prob => prob.filename), p.filename)
+        : undefined;
+
+      await saveProblem({
+        filename: p.filename,
+        renameTo,
+        title: overviewDraft.title.trim(),
+        statement: overviewDraft.statement,
+        tags: overviewDraft.tagsInput.split(',').map(t => t.trim()).filter(Boolean),
+        difficulty: overviewDraft.difficulty,
+        platform: overviewDraft.platform || undefined,
+        date: overviewDraft.date,
+        approaches: approachesDraft.filter(
+          a => a.title.trim() || a.content.trim() || a.timeComplexity?.trim() || a.spaceComplexity?.trim()
+        ),
+        learning: learningDraft,
+        mistakes: mistakesDraft,
+        code: codeDraft,
+      });
+      exitCreateMode();
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  const handleSaveTab = async () => {
+    if (createMode) return;
+    const tabToSave = (createMode ? activeTab : editingTab) as EditableTab | 'revision' | null;
+    if (!tabToSave || tabToSave === 'revision' || saving) return;
+    setSaving(true);
+    try {
+      switch (tabToSave) {
         case 'overview':
           if (!overviewDraft) return;
           await saveProblem({
@@ -166,7 +249,7 @@ export const ProblemDetailView: React.FC = () => {
           await saveProblem({ filename: p.filename, code: codeDraft });
           break;
       }
-      cancelEdit();
+      if (!createMode) cancelEdit();
     } finally {
       setSaving(false);
     }
@@ -215,7 +298,7 @@ export const ProblemDetailView: React.FC = () => {
         );
       }
       if (!data.formatted) throw new Error('No formatted output returned');
-      if (editingTab === 'code' && codeDraft !== null) {
+      if ((createMode || editingTab === 'code') && codeDraft !== null) {
         setCodeDraft(data.formatted);
       } else {
         await saveProblem({ filename: p.filename, code: data.formatted });
@@ -238,7 +321,7 @@ export const ProblemDetailView: React.FC = () => {
   };
 
   const handleTabChange = (tab: TabId) => {
-    if (editingTab) cancelEdit();
+    if (!createMode && editingTab) cancelEdit();
     setActiveTab(tab);
   };
 
@@ -260,28 +343,31 @@ export const ProblemDetailView: React.FC = () => {
   };
 
   const renderTabContent = () => {
-    const isEditing = (tab: EditableTab) => editingTab === tab;
+    const isEditing = (tab: EditableTab) => createMode || editingTab === tab;
 
     switch (activeTab) {
       case 'overview':
         return (
           <div className="space-y-6 animate-in fade-in slide-in-from-bottom-2 duration-300">
-            <TabEditBar
-              isEditing={isEditing('overview')}
-              onEdit={() => startEdit('overview')}
-              onSave={handleSaveTab}
-              onCancel={cancelEdit}
-            />
+            {!createMode && (
+              <TabEditBar
+                isEditing={isEditing('overview')}
+                createMode={createMode}
+                onEdit={() => startEdit('overview')}
+                onSave={handleSaveTab}
+                onCancel={cancelEdit}
+              />
+            )}
             {isEditing('overview') && overviewDraft ? (
               <div className="space-y-4">
                 <div className="bg-white/5 border border-white/5 rounded-xl p-6 space-y-4">
                   <div>
                     <label className="text-[10px] uppercase tracking-widest text-slate-500 font-bold mb-2 block">Title</label>
-                    <input className={inputClass} value={overviewDraft.title} onChange={e => setOverviewDraft({ ...overviewDraft, title: e.target.value })} />
+                    <input className={inputClass} value={overviewDraft.title} onChange={e => setOverviewDraft({ ...overviewDraft, title: e.target.value })} placeholder="e.g. Two Sum" />
                   </div>
                   <div>
                     <label className="text-[10px] uppercase tracking-widest text-slate-500 font-bold mb-2 block">Problem Statement</label>
-                    <textarea className={textareaClass} value={overviewDraft.statement} onChange={e => setOverviewDraft({ ...overviewDraft, statement: e.target.value })} />
+                    <textarea className={textareaClass} value={overviewDraft.statement} onChange={e => setOverviewDraft({ ...overviewDraft, statement: e.target.value })} placeholder="Describe the problem here..." />
                   </div>
                 </div>
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -334,7 +420,7 @@ export const ProblemDetailView: React.FC = () => {
                     <select
                       value={p.status || ''}
                       onChange={e => handleStatusChange(e.target.value)}
-                      disabled={!!editingTab}
+                      disabled={!!editingTab || createMode}
                       className="w-full bg-[#010101] border border-white/10 text-sm text-slate-300 rounded p-2 focus:outline-none focus:border-indigo-500 disabled:opacity-50"
                     >
                       <option value="Need Revision">Need Revision</option>
@@ -359,7 +445,9 @@ export const ProblemDetailView: React.FC = () => {
                     <PlusIcon className="w-3.5 h-3.5" /> Add Approach
                   </button>
                 )}
-                <TabEditBar isEditing={isEditing('approach')} onEdit={() => startEdit('approach')} onSave={handleSaveTab} onCancel={cancelEdit} />
+                {!createMode && (
+                  <TabEditBar isEditing={isEditing('approach')} createMode={createMode} onEdit={() => startEdit('approach')} onSave={handleSaveTab} onCancel={cancelEdit} />
+                )}
               </div>
             </div>
             {isEditing('approach') && approachesDraft ? (
@@ -383,7 +471,7 @@ export const ProblemDetailView: React.FC = () => {
                   </div>
                   <div>
                     <label className="text-[10px] uppercase tracking-widest text-slate-500 font-bold mb-2 block">Explanation</label>
-                    <textarea className={textareaClass} value={app.content} onChange={e => updateApproach(idx, 'content', e.target.value)} />
+                    <textarea className={textareaClass} value={app.content} onChange={e => updateApproach(idx, 'content', e.target.value)} placeholder="Explain your approach here..." />
                   </div>
                 </div>
               ))
@@ -426,7 +514,9 @@ export const ProblemDetailView: React.FC = () => {
       case 'learning':
         return (
           <div className="animate-in fade-in slide-in-from-bottom-2 duration-300">
-            <TabEditBar isEditing={isEditing('learning')} onEdit={() => startEdit('learning')} onSave={handleSaveTab} onCancel={cancelEdit} />
+            {!createMode && (
+              <TabEditBar isEditing={isEditing('learning')} createMode={createMode} onEdit={() => startEdit('learning')} onSave={handleSaveTab} onCancel={cancelEdit} />
+            )}
             <div className="bg-white/5 border border-white/5 rounded-xl p-6 min-h-[400px]">
               <h4 className="text-sm font-semibold text-slate-400 uppercase tracking-widest mb-4 flex items-center gap-2">
                 <BookOpenIcon className="w-4 h-4"/> Key Takeaways
@@ -445,7 +535,9 @@ export const ProblemDetailView: React.FC = () => {
       case 'mistakes':
         return (
           <div className="animate-in fade-in slide-in-from-bottom-2 duration-300">
-            <TabEditBar isEditing={isEditing('mistakes')} onEdit={() => startEdit('mistakes')} onSave={handleSaveTab} onCancel={cancelEdit} />
+            {!createMode && (
+              <TabEditBar isEditing={isEditing('mistakes')} createMode={createMode} onEdit={() => startEdit('mistakes')} onSave={handleSaveTab} onCancel={cancelEdit} />
+            )}
             <div className="bg-white/5 border border-white/5 rounded-xl p-6 min-h-[400px]">
               <h4 className="text-sm font-semibold text-slate-400 uppercase tracking-widest mb-4 flex items-center gap-2">
                 <AlertTriangleIcon className="w-4 h-4 text-amber-400"/> Mistakes Log
@@ -466,7 +558,9 @@ export const ProblemDetailView: React.FC = () => {
         const codeValue = codeEditing && codeDraft !== null ? codeDraft : p.code;
         return (
           <div className="animate-in fade-in slide-in-from-bottom-2 duration-300">
-            <TabEditBar isEditing={codeEditing} onEdit={() => startEdit('code')} onSave={handleSaveTab} onCancel={cancelEdit} />
+            {!createMode && (
+              <TabEditBar isEditing={codeEditing} createMode={createMode} onEdit={() => startEdit('code')} onSave={handleSaveTab} onCancel={cancelEdit} />
+            )}
             <div className={cn(
               'bg-[#010101] border border-white/5 rounded-xl overflow-hidden flex flex-col',
               isFullscreenCode
@@ -584,7 +678,10 @@ export const ProblemDetailView: React.FC = () => {
             <MenuIcon className="w-5 h-5" />
           </button>
           <button
-            onClick={() => setSelectedProblemInfo(null)}
+            onClick={() => {
+              setCreateModeFilename(null);
+              setSelectedProblemInfo(null);
+            }}
             className="flex items-center gap-2 text-slate-400 hover:text-white text-sm transition-colors group"
           >
             <ArrowLeftIcon className="w-4 h-4 group-hover:-translate-x-1 transition-transform" />
@@ -595,8 +692,13 @@ export const ProblemDetailView: React.FC = () => {
         <div className="flex flex-col md:flex-row md:items-start justify-between gap-4">
           <div className="min-w-0">
             <div className="flex flex-wrap items-center gap-2 sm:gap-3 mb-2">
-              <h1 className="text-xl sm:text-2xl md:text-3xl font-bold text-white tracking-tight break-words">{p.title || p.filename}</h1>
-              <button onClick={handleToggleFavorite} className="text-slate-500 hover:text-amber-500 transition-colors" disabled={!!editingTab}>
+              <h1 className={cn(
+                'text-xl sm:text-2xl md:text-3xl font-bold tracking-tight break-words',
+                createMode && !overviewDraft?.title.trim() ? 'text-slate-500 italic' : 'text-white'
+              )}>
+                {createMode ? (overviewDraft?.title.trim() || 'New Problem') : (p.title || p.filename)}
+              </h1>
+              <button onClick={handleToggleFavorite} className="text-slate-500 hover:text-amber-500 transition-colors" disabled={!!editingTab || createMode}>
                 <StarIcon className={cn('w-6 h-6', p.favorite && 'fill-amber-500 text-amber-500')} />
               </button>
             </div>
@@ -614,9 +716,21 @@ export const ProblemDetailView: React.FC = () => {
           </div>
 
           <div className="flex items-center gap-3">
-            <button onClick={handleDelete} title="Delete Record" className="p-2 border border-rose-900/50 text-rose-500 rounded-lg hover:bg-rose-950 transition-colors">
-              <Trash2Icon className="w-4 h-4" />
-            </button>
+            {createMode && (
+              <button
+                onClick={handleSaveAll}
+                disabled={saving}
+                className="flex items-center gap-2 px-4 py-2 text-sm font-medium text-white bg-indigo-600 hover:bg-indigo-500 rounded-lg transition-colors disabled:opacity-50"
+              >
+                <SaveIcon className="w-4 h-4" />
+                {saving ? 'Saving…' : 'Save Problem'}
+              </button>
+            )}
+            {!createMode && (
+              <button onClick={handleDelete} title="Delete Record" className="p-2 border border-rose-900/50 text-rose-500 rounded-lg hover:bg-rose-950 transition-colors">
+                <Trash2Icon className="w-4 h-4" />
+              </button>
+            )}
           </div>
         </div>
 
@@ -630,7 +744,7 @@ export const ProblemDetailView: React.FC = () => {
                 activeTab === tab
                   ? 'border-indigo-400 text-indigo-400'
                   : 'border-transparent text-slate-500 hover:text-slate-300 hover:border-slate-700',
-                editingTab && editingTab !== tab && tab !== 'revision' && 'opacity-50'
+                !createMode && editingTab && editingTab !== tab && tab !== 'revision' && 'opacity-50'
               )}
             >
               {tab}
