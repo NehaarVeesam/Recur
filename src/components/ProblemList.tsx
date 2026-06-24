@@ -7,7 +7,7 @@ export const ProblemList: React.FC = () => {
     problems, loading, error, refresh,
     currentView, selectedTag, 
     searchQuery, sortBy, filterDifficulty,
-    setSelectedProblemInfo, setSelectedTag
+    navigateToProblem, setSelectedTag
   } = useData();
 
   const filteredProblems = useMemo(() => {
@@ -119,7 +119,7 @@ export const ProblemList: React.FC = () => {
       ) : (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
           {filteredProblems.map(p => (
-            <ProblemCard key={p.filename} problem={p} onClick={() => setSelectedProblemInfo(p)} />
+            <ProblemCard key={p.filename} problem={p} onClick={() => navigateToProblem(p)} />
           ))}
         </div>
       )}

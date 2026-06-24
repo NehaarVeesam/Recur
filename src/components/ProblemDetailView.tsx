@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { Approach } from '../utils/parser';
 import { useData } from '../context/DataContext';
 import {
@@ -8,6 +8,10 @@ import {
 } from 'lucide-react';
 import { cn } from '../utils/cn';
 import { titleToFilename, isDraftFilename } from '../utils/filename';
+import { saveStoredDraft, loadStoredDraft, clearStoredDraft } from '../utils/draftStorage';
+import { hasUnsavedWork, confirmDiscard } from '../utils/unsavedChanges';
+import { useIsMobile } from '../hooks/useIsMobile';
+import { isTypingTarget } from '../hooks/useIsTypingTarget';
 import { CODE_LANGUAGE, PYTHON_EDITOR_OPTIONS } from '../utils/codeEditor';
 import Editor from '@monaco-editor/react';
 import toast from 'react-hot-toast';
@@ -29,6 +33,8 @@ const inputClass =
 const textareaClass =
   'w-full bg-[#010101] border border-white/10 text-sm text-slate-300 rounded-lg p-3 min-h-[160px] resize-y focus:outline-none focus:border-indigo-500/50 leading-relaxed';
 
+const TAB_ORDER: TabId[] = ['overview', 'approach', 'learning', 'mistakes', 'code', 'revision'];
+
 const TabEditBar: React.FC<{
   isEditing: boolean;
   createMode?: boolean;
@@ -41,13 +47,13 @@ const TabEditBar: React.FC<{
       <>
         <button
           onClick={onCancel}
-          className="flex items-center gap-1.5 px-3 py-1.5 text-xs text-slate-400 border border-white/10 rounded-lg hover:bg-white/5 transition-colors"
+          className="flex items-center gap-1.5 px-3 py-2 sm:py-1.5 min-h-11 sm:min-h-0 text-xs text-slate-400 border border-white/10 rounded-lg hover:bg-white/5 transition-colors"
         >
           <XIcon className="w-3.5 h-3.5" /> {createMode ? 'Done' : 'Cancel'}
         </button>
         <button
           onClick={onSave}
-          className="flex items-center gap-1.5 px-3 py-1.5 text-xs text-indigo-400 border border-indigo-500/50 bg-indigo-500/10 rounded-lg hover:bg-indigo-500/20 transition-colors"
+          className="flex items-center gap-1.5 px-3 py-2 sm:py-1.5 min-h-11 sm:min-h-0 text-xs text-indigo-400 border border-indigo-500/50 bg-indigo-500/10 rounded-lg hover:bg-indigo-500/20 transition-colors"
         >
           <SaveIcon className="w-3.5 h-3.5" /> Save
         </button>
@@ -55,7 +61,7 @@ const TabEditBar: React.FC<{
     ) : (
       <button
         onClick={onEdit}
-        className="flex items-center gap-1.5 px-3 py-1.5 text-xs text-slate-400 border border-white/10 rounded-lg hover:bg-white/5 hover:text-slate-200 transition-colors"
+        className="flex items-center gap-1.5 px-3 py-2 sm:py-1.5 min-h-11 sm:min-h-0 text-xs text-slate-400 border border-white/10 rounded-lg hover:bg-white/5 hover:text-slate-200 transition-colors"
       >
         <Edit3Icon className="w-3.5 h-3.5" /> Edit
       </button>
@@ -64,7 +70,18 @@ const TabEditBar: React.FC<{
 );
 
 export const ProblemDetailView: React.FC = () => {
-  const { selectedProblemInfo, setSelectedProblemInfo, saveProblem, deleteProblem, setIsSidebarOpen, createModeFilename, setCreateModeFilename, problems } = useData();
+  const {
+    selectedProblemInfo,
+    navigateToProblem,
+    saveProblem,
+    deleteProblem,
+    setIsSidebarOpen,
+    createModeFilename,
+    setCreateModeFilename,
+    problems,
+    registerLeaveConfirm,
+  } = useData();
+  const isMobile = useIsMobile();
   const [activeTab, setActiveTab] = useState<TabId>('overview');
   const [editingTab, setEditingTab] = useState<EditableTab | null>(null);
   const [isFullscreenCode, setIsFullscreenCode] = useState(false);
@@ -77,10 +94,57 @@ export const ProblemDetailView: React.FC = () => {
   const [mistakesDraft, setMistakesDraft] = useState<string | null>(null);
   const [codeDraft, setCodeDraft] = useState<string | null>(null);
   const [formatting, setFormatting] = useState(false);
+  const draftHydratedRef = useRef(false);
+  const keyHandlersRef = useRef({
+    onSave: () => {},
+    onTab: (_tab: TabId) => {},
+  });
+
+  const getUnsavedState = useCallback(() => {
+    if (!selectedProblemInfo) return false;
+    return hasUnsavedWork({
+      createMode: createModeFilename === selectedProblemInfo.filename,
+      editingTab,
+      problem: selectedProblemInfo,
+      overviewDraft,
+      approachesDraft,
+      learningDraft,
+      mistakesDraft,
+      codeDraft,
+    });
+  }, [
+    selectedProblemInfo,
+    createModeFilename,
+    editingTab,
+    overviewDraft,
+    approachesDraft,
+    learningDraft,
+    mistakesDraft,
+    codeDraft,
+  ]);
+
+  useEffect(() => {
+    draftHydratedRef.current = false;
+  }, [selectedProblemInfo?.filename]);
 
   useEffect(() => {
     if (!selectedProblemInfo) return;
-    if (createModeFilename === selectedProblemInfo.filename) {
+
+    const stored = loadStoredDraft();
+    if (stored && stored.problemFilename === selectedProblemInfo.filename && !draftHydratedRef.current) {
+      draftHydratedRef.current = true;
+      setOverviewDraft(stored.overviewDraft);
+      setApproachesDraft(stored.approachesDraft);
+      setLearningDraft(stored.learningDraft);
+      setMistakesDraft(stored.mistakesDraft);
+      setCodeDraft(stored.codeDraft);
+      setActiveTab(stored.activeTab);
+      setEditingTab(stored.editingTab);
+      return;
+    }
+
+    if (createModeFilename === selectedProblemInfo.filename && !draftHydratedRef.current) {
+      draftHydratedRef.current = true;
       setOverviewDraft({
         title: '',
         statement: '',
@@ -107,6 +171,84 @@ export const ProblemDetailView: React.FC = () => {
     setCodeDraft(null);
   }, [activeTab, selectedProblemInfo?.filename, createModeFilename]);
 
+  useEffect(() => {
+    if (!selectedProblemInfo) return;
+    const inCreateMode = createModeFilename === selectedProblemInfo.filename;
+    if (!inCreateMode && !editingTab) {
+      clearStoredDraft();
+      return;
+    }
+
+    const timeout = window.setTimeout(() => {
+      saveStoredDraft({
+        problemFilename: selectedProblemInfo.filename,
+        problemContent: selectedProblemInfo.raw,
+        createMode: inCreateMode,
+        activeTab,
+        editingTab,
+        overviewDraft,
+        approachesDraft,
+        learningDraft,
+        mistakesDraft,
+        codeDraft,
+        savedAt: Date.now(),
+      });
+    }, 400);
+
+    return () => window.clearTimeout(timeout);
+  }, [
+    selectedProblemInfo,
+    createModeFilename,
+    activeTab,
+    editingTab,
+    overviewDraft,
+    approachesDraft,
+    learningDraft,
+    mistakesDraft,
+    codeDraft,
+  ]);
+
+  useEffect(() => {
+    registerLeaveConfirm(() => {
+      if (!getUnsavedState()) return true;
+      return confirmDiscard();
+    });
+    return () => registerLeaveConfirm(null);
+  }, [registerLeaveConfirm, getUnsavedState]);
+
+  useEffect(() => {
+    const onBeforeUnload = (e: BeforeUnloadEvent) => {
+      if (!getUnsavedState()) return;
+      e.preventDefault();
+      e.returnValue = '';
+    };
+    window.addEventListener('beforeunload', onBeforeUnload);
+    return () => window.removeEventListener('beforeunload', onBeforeUnload);
+  }, [getUnsavedState]);
+
+  useEffect(() => {
+    const onKeyDown = (e: KeyboardEvent) => {
+      if (isTypingTarget(e.target)) return;
+
+      if ((e.metaKey || e.ctrlKey) && e.key.toLowerCase() === 's') {
+        e.preventDefault();
+        keyHandlersRef.current.onSave();
+        return;
+      }
+
+      if (e.altKey && !e.metaKey && !e.ctrlKey) {
+        const idx = parseInt(e.key, 10);
+        if (idx >= 1 && idx <= TAB_ORDER.length) {
+          e.preventDefault();
+          keyHandlersRef.current.onTab(TAB_ORDER[idx - 1]);
+        }
+      }
+    };
+
+    window.addEventListener('keydown', onKeyDown);
+    return () => window.removeEventListener('keydown', onKeyDown);
+  }, []);
+
   if (!selectedProblemInfo) return null;
   const p = selectedProblemInfo;
   const createMode = createModeFilename === p.filename;
@@ -119,19 +261,26 @@ export const ProblemDetailView: React.FC = () => {
     setLearningDraft(null);
     setMistakesDraft(null);
     setCodeDraft(null);
+    clearStoredDraft();
   };
 
-  const cancelEdit = () => {
-    if (createMode) {
-      exitCreateMode();
-      return;
-    }
+  const discardEdit = () => {
     setEditingTab(null);
     setOverviewDraft(null);
     setApproachesDraft(null);
     setLearningDraft(null);
     setMistakesDraft(null);
     setCodeDraft(null);
+    clearStoredDraft();
+  };
+
+  const cancelEdit = () => {
+    if (getUnsavedState() && !confirmDiscard()) return;
+    if (createMode) {
+      exitCreateMode();
+      return;
+    }
+    discardEdit();
   };
 
   const startEdit = (tab: EditableTab) => {
@@ -184,13 +333,12 @@ export const ProblemDetailView: React.FC = () => {
     }
     setSaving(true);
     try {
-      const renameTo = isDraftFilename(p.filename)
-        ? titleToFilename(overviewDraft.title, problems.map(prob => prob.filename), p.filename)
-        : undefined;
+      const targetFilename = isDraftFilename(p.filename)
+        ? titleToFilename(overviewDraft.title, problems.map(prob => prob.filename))
+        : p.filename;
 
       await saveProblem({
-        filename: p.filename,
-        renameTo,
+        filename: targetFilename,
         title: overviewDraft.title.trim(),
         statement: overviewDraft.statement,
         tags: overviewDraft.tagsInput.split(',').map(t => t.trim()).filter(Boolean),
@@ -321,8 +469,19 @@ export const ProblemDetailView: React.FC = () => {
   };
 
   const handleTabChange = (tab: TabId) => {
-    if (!createMode && editingTab) cancelEdit();
+    if (!createMode && editingTab) {
+      if (getUnsavedState() && !confirmDiscard('Discard unsaved changes on this tab?')) return;
+      discardEdit();
+    }
     setActiveTab(tab);
+  };
+
+  keyHandlersRef.current = {
+    onSave: () => {
+      if (createMode) void handleSaveAll();
+      else if (editingTab) void handleSaveTab();
+    },
+    onTab: handleTabChange,
   };
 
   const updateApproach = (idx: number, field: keyof Approach, value: string) => {
@@ -576,7 +735,7 @@ export const ProblemDetailView: React.FC = () => {
                   <button
                     onClick={handleFormatCode}
                     disabled={formatting || (!codeEditing && !p.code.trim())}
-                    className="flex items-center gap-1.5 px-2 py-1.5 text-xs text-slate-400 hover:text-white bg-white/5 hover:bg-white/10 rounded disabled:opacity-40 disabled:cursor-not-allowed"
+                    className="flex items-center gap-1.5 px-3 py-2 sm:px-2 sm:py-1.5 min-h-11 sm:min-h-0 text-xs text-slate-400 hover:text-white bg-white/5 hover:bg-white/10 rounded disabled:opacity-40 disabled:cursor-not-allowed"
                     title="Format with Black (pip install black)"
                   >
                     <Wand2Icon className="w-3.5 h-3.5" />
@@ -595,17 +754,29 @@ export const ProblemDetailView: React.FC = () => {
                 </div>
               </div>
               <div className="flex-1 relative min-h-0">
-                <Editor
-                  height="100%"
-                  language={CODE_LANGUAGE}
-                  theme="vs-dark"
-                  value={codeValue}
-                  onChange={codeEditing ? val => setCodeDraft(val || '') : undefined}
-                  options={{
-                    ...PYTHON_EDITOR_OPTIONS,
-                    readOnly: !codeEditing,
-                  }}
-                />
+                {isMobile && codeEditing ? (
+                  <textarea
+                    className="w-full h-full min-h-[280px] bg-[#010101] text-slate-300 font-mono text-base leading-relaxed p-4 focus:outline-none resize-none"
+                    value={codeValue}
+                    onChange={(e) => setCodeDraft(e.target.value)}
+                    placeholder={'def solve():\n    pass'}
+                    spellCheck={false}
+                    autoCapitalize="off"
+                    autoCorrect="off"
+                  />
+                ) : (
+                  <Editor
+                    height="100%"
+                    language={CODE_LANGUAGE}
+                    theme="vs-dark"
+                    value={codeValue}
+                    onChange={codeEditing ? val => setCodeDraft(val || '') : undefined}
+                    options={{
+                      ...PYTHON_EDITOR_OPTIONS,
+                      readOnly: !codeEditing,
+                    }}
+                  />
+                )}
               </div>
             </div>
           </div>
@@ -669,25 +840,25 @@ export const ProblemDetailView: React.FC = () => {
   return (
     <div className="h-full flex flex-col bg-[#0A0A0A] min-w-0">
       <div className="flex-none px-4 sm:px-6 md:px-8 py-4 sm:py-6 border-b border-white/5 bg-[#0A0A0A]/50 backdrop-blur z-10 sticky top-0 safe-area-top">
-        <div className="flex items-center gap-2 mb-4 sm:mb-6">
-          <button
-            className="md:hidden p-2 -ml-2 text-slate-400 hover:text-white rounded-lg shrink-0"
-            onClick={() => setIsSidebarOpen(true)}
-            aria-label="Open menu"
-          >
-            <MenuIcon className="w-5 h-5" />
-          </button>
-          <button
-            onClick={() => {
-              setCreateModeFilename(null);
-              setSelectedProblemInfo(null);
-            }}
-            className="flex items-center gap-2 text-slate-400 hover:text-white text-sm transition-colors group"
-          >
-            <ArrowLeftIcon className="w-4 h-4 group-hover:-translate-x-1 transition-transform" />
-            Back to Problems
-          </button>
-        </div>
+        <div className="flex gap-2 sm:gap-3">
+          <div className="md:hidden w-10 shrink-0 flex items-start pt-0.5">
+            <button
+              className="flex h-10 w-10 items-center justify-center text-slate-400 hover:text-white rounded-lg shrink-0"
+              onClick={() => setIsSidebarOpen(true)}
+              aria-label="Open menu"
+            >
+              <MenuIcon className="w-5 h-5" />
+            </button>
+          </div>
+
+          <div className="flex-1 min-w-0">
+            <button
+              onClick={() => navigateToProblem(null)}
+              className="inline-flex h-10 items-center gap-2 rounded-lg px-2 -ml-2 mb-3 sm:mb-4 text-slate-400 hover:text-white hover:bg-white/5 text-sm transition-colors group"
+            >
+              <ArrowLeftIcon className="w-4 h-4 group-hover:-translate-x-1 transition-transform" />
+              Back to Problems
+            </button>
 
         <div className="flex flex-col md:flex-row md:items-start justify-between gap-4">
           <div className="min-w-0">
@@ -720,7 +891,7 @@ export const ProblemDetailView: React.FC = () => {
               <button
                 onClick={handleSaveAll}
                 disabled={saving}
-                className="flex items-center gap-2 px-4 py-2 text-sm font-medium text-white bg-indigo-600 hover:bg-indigo-500 rounded-lg transition-colors disabled:opacity-50"
+                className="flex items-center gap-2 px-4 py-2.5 sm:py-2 min-h-11 text-sm font-medium text-white bg-indigo-600 hover:bg-indigo-500 rounded-lg transition-colors disabled:opacity-50"
               >
                 <SaveIcon className="w-4 h-4" />
                 {saving ? 'Saving…' : 'Save Problem'}
@@ -734,7 +905,7 @@ export const ProblemDetailView: React.FC = () => {
           </div>
         </div>
 
-        <div className="flex items-center gap-4 sm:gap-6 mt-6 sm:mt-8 overflow-x-auto no-scrollbar -mx-1 px-1">
+        <div className="flex items-center gap-4 sm:gap-6 mt-6 sm:mt-8 overflow-x-auto no-scrollbar">
           {(['overview', 'approach', 'learning', 'mistakes', 'code', 'revision'] as const).map(tab => (
             <button
               key={tab}
@@ -750,6 +921,8 @@ export const ProblemDetailView: React.FC = () => {
               {tab}
             </button>
           ))}
+        </div>
+          </div>
         </div>
       </div>
 

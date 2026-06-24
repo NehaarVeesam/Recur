@@ -13,7 +13,7 @@ import {
 import { cn } from '../utils/cn';
 
 export const Sidebar: React.FC = () => {
-  const { currentView, setCurrentView, setSelectedTag, setIsSidebarOpen, setSelectedProblemInfo, createNewProblem } = useData();
+  const { currentView, setCurrentView, setSelectedTag, setIsSidebarOpen, navigateToProblem, createNewProblem } = useData();
 
   const navItems = [
     { id: 'all', label: 'All Problems', icon: FolderIcon },
@@ -38,7 +38,7 @@ export const Sidebar: React.FC = () => {
             setIsSidebarOpen(false);
           }}
           className="w-8 h-8 rounded-full bg-white/5 hover:bg-indigo-500/20 hover:text-indigo-400 text-slate-400 border border-white/5 flex items-center justify-center transition-colors shrink-0"
-          title="Create New Problem"
+          title="Create New Problem (Ctrl+N)"
         >
           <PlusIcon className="w-4 h-4" />
         </button>
@@ -52,7 +52,7 @@ export const Sidebar: React.FC = () => {
             onClick={() => {
               setCurrentView(item.id);
               setSelectedTag(null);
-              setSelectedProblemInfo(null);
+              navigateToProblem(null);
               setIsSidebarOpen(false);
             }}
             className={cn(

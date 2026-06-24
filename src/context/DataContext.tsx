@@ -1,6 +1,10 @@
-import React, { createContext, useContext, useEffect, useState } from 'react';
+import React, { createContext, useContext, useEffect, useState, useRef, useCallback } from 'react';
 import { Problem, parseProblem, generateProblemText } from '../utils/parser';
+import { isDraftFilename } from '../utils/filename';
+import { loadStoredDraft, clearStoredDraft } from '../utils/draftStorage';
 import toast from 'react-hot-toast';
+
+type LeaveConfirmFn = () => boolean;
 
 interface DataContextType {
   problems: Problem[];
@@ -9,7 +13,7 @@ interface DataContextType {
   refresh: () => Promise<void>;
   saveProblem: (problem: Partial<Problem> & { filename: string; renameTo?: string }) => Promise<string>;
   deleteProblem: (filename: string) => Promise<void>;
-  createNewProblem: () => Promise<void>;
+  createNewProblem: () => void;
   
   // UI State
   searchQuery: string;
@@ -19,7 +23,7 @@ interface DataContextType {
   currentView: 'all' | 'favorites' | 'recent' | 'revision' | 'tags' | 'analytics';
   setCurrentView: (v: 'all' | 'favorites' | 'recent' | 'revision' | 'tags' | 'analytics') => void;
   selectedProblemInfo: Problem | null;
-  setSelectedProblemInfo: (p: Problem | null) => void;
+  navigateToProblem: (p: Problem | null) => void;
   sortBy: 'newest' | 'oldest' | 'a-z' | 'z-a' | 'difficulty';
   setSortBy: (s: 'newest' | 'oldest' | 'a-z' | 'z-a' | 'difficulty') => void;
   filterDifficulty: string | null;
@@ -28,6 +32,7 @@ interface DataContextType {
   setIsSidebarOpen: (b: boolean) => void;
   createModeFilename: string | null;
   setCreateModeFilename: (filename: string | null) => void;
+  registerLeaveConfirm: (fn: LeaveConfirmFn | null) => void;
 }
 
 const DataContext = createContext<DataContextType | null>(null);
@@ -51,6 +56,28 @@ export const DataProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const [filterDifficulty, setFilterDifficulty] = useState<string | null>(null);
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
   const [createModeFilename, setCreateModeFilename] = useState<string | null>(null);
+  const leaveConfirmRef = useRef<LeaveConfirmFn | null>(null);
+  const draftRestoredRef = useRef(false);
+
+  const registerLeaveConfirm = useCallback((fn: LeaveConfirmFn | null) => {
+    leaveConfirmRef.current = fn;
+  }, []);
+
+  const confirmLeaveDetail = useCallback((): boolean => {
+    if (!leaveConfirmRef.current) return true;
+    return leaveConfirmRef.current();
+  }, []);
+
+  const navigateToProblem = useCallback((p: Problem | null) => {
+    if (selectedProblemInfo && (!p || p.filename !== selectedProblemInfo.filename)) {
+      if (!confirmLeaveDetail()) return;
+    }
+    if (!p) {
+      setCreateModeFilename(null);
+      clearStoredDraft();
+    }
+    setSelectedProblemInfo(p);
+  }, [selectedProblemInfo, confirmLeaveDetail]);
 
   const fetchProblems = async (silent = false) => {
     try {
@@ -72,6 +99,19 @@ export const DataProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
   useEffect(() => {
     fetchProblems();
+  }, []);
+
+  useEffect(() => {
+    if (draftRestoredRef.current) return;
+    const stored = loadStoredDraft();
+    if (!stored) return;
+    draftRestoredRef.current = true;
+    const restored = parseProblem(stored.problemFilename, stored.problemContent);
+    setSelectedProblemInfo(restored);
+    if (stored.createMode) {
+      setCreateModeFilename(stored.problemFilename);
+    }
+    toast('Restored your unsaved draft', { icon: '💾' });
   }, []);
 
   const saveProblem = async (problemData: Partial<Problem> & { filename: string; renameTo?: string }) => {
@@ -113,15 +153,24 @@ export const DataProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
       const updated = parseProblem(finalFilename, content);
       setSelectedProblemInfo(prev =>
-        prev?.filename === problemData.filename ? updated : prev
+        prev && (prev.filename === problemData.filename || isDraftFilename(prev.filename))
+          ? updated
+          : prev
       );
       setProblems(prev => {
         const rest = prev.filter(p => p.filename !== problemData.filename && p.filename !== finalFilename);
         return [...rest, updated];
       });
 
+      clearStoredDraft();
+
+      const savedFromDraft =
+        !!selectedProblemInfo?.filename &&
+        isDraftFilename(selectedProblemInfo.filename) &&
+        finalFilename !== selectedProblemInfo.filename;
+
       toast.success(
-        problemData.renameTo && finalFilename !== problemData.filename
+        savedFromDraft || (problemData.renameTo && finalFilename !== problemData.filename)
           ? `Saved as ${finalFilename}`
           : 'Saved successfully'
       );
@@ -147,8 +196,11 @@ export const DataProvider: React.FC<{ children: React.ReactNode }> = ({ children
     }
   };
 
-  const createNewProblem = async () => {
-    try {
+  const createNewProblem = () => {
+    if (selectedProblemInfo && !confirmLeaveDetail()) return;
+
+    clearStoredDraft();
+
     const filename = `new-problem-${Date.now()}.txt`;
     const today = new Date().toISOString().split('T')[0];
     const content = `Title: 
@@ -171,23 +223,10 @@ Mistakes:
 
 Code:
 `;
-    const res = await fetch(`/api/problems/${filename}`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ content })
-    });
-    if (!res.ok) throw new Error('Failed to create new problem');
-
-    await fetchProblems(true);
-    
     const newProb = parseProblem(filename, content);
     setCreateModeFilename(filename);
     setSelectedProblemInfo(newProb);
     setCurrentView('all');
-    } catch (e: any) {
-      toast.error(e.message || 'Failed to create new problem');
-      throw e;
-    }
   };
 
   return (
@@ -196,11 +235,12 @@ Code:
       searchQuery, setSearchQuery,
       selectedTag, setSelectedTag,
       currentView, setCurrentView,
-      selectedProblemInfo, setSelectedProblemInfo,
+      selectedProblemInfo, navigateToProblem,
       sortBy, setSortBy,
       filterDifficulty, setFilterDifficulty,
       isSidebarOpen, setIsSidebarOpen,
       createModeFilename, setCreateModeFilename,
+      registerLeaveConfirm,
     }}>
       {children}
     </DataContext.Provider>

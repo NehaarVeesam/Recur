@@ -7,6 +7,12 @@ import { ProblemDetailView } from './components/ProblemDetailView';
 import { AnalyticsDashboard } from './components/AnalyticsDashboard';
 import { TagsExplorer } from './components/TagsExplorer';
 import { Toaster } from 'react-hot-toast';
+import { useGlobalKeyboardShortcuts } from './hooks/useGlobalKeyboardShortcuts';
+
+const GlobalShortcuts = () => {
+  useGlobalKeyboardShortcuts();
+  return null;
+};
 
 const ContentWrapper = () => {
   const { currentView, selectedTag, selectedProblemInfo } = useData();
@@ -59,6 +65,7 @@ const RootLayout = () => {
 export default function App() {
   return (
     <DataProvider>
+      <GlobalShortcuts />
       <RootLayout />
       <Toaster 
         position="bottom-center"
