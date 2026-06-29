@@ -1,0 +1,27 @@
+Title: Two Sum
+Date: 2026-06-26
+Difficulty: Easy
+Tags: Array, Hash Table
+Platform: Leetcode - 1
+Favorite: false
+Status: Need Revision
+
+Statement:
+Given an array of integers nums and an integer target, return indices of the two numbers such that they add up to target.
+You may assume that each input would have exactly one solution, and you may not use the same element twice.
+You can return the answer in any order.
+
+Approach: Brute Force
+Time Complexity: O(n^2)
+Space Complexity: O(1)
+Iterate over the outer loop of array and taken one element , iterate over the rest array to get the sum for target.
+
+Learning:
+
+
+Mistakes:
+1. For Optimization -> did a hashmap earlier as a initial set costed the duplicates case (6 - 3 = 3) 3 already exists as it was initialized before.
+2. To Resolve this instead of creating a predefined hashmap .. while iterating we check the diff , if not present then only we load into hashmap.
+
+Code:
+

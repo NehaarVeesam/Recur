@@ -397,7 +397,7 @@ export const ProblemDetailView: React.FC = () => {
           await saveProblem({ filename: p.filename, code: codeDraft });
           break;
       }
-      if (!createMode) cancelEdit();
+      if (!createMode) discardEdit();
     } finally {
       setSaving(false);
     }
