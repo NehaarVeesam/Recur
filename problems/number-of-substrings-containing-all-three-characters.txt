@@ -1,0 +1,80 @@
+Title: Number of substrings containing all three characters
+Date: 2026-06-30
+Difficulty: Medium
+Tags: String, Sliding Window, Hash Map
+Platform: Leetcode - 1358
+Favorite: false
+Status: Need Revision
+
+Statement:
+Given a string s consisting only of characters a, b and c.
+
+Return the number of substrings containing at least one occurrence of all these characters a, b and c.
+
+Approach: Brute force approach
+Time Complexity: O(n^2)
+Space Complexity: O(1)
+1. Iterate i from 1 to n 
+2. Take that character as temp and add j from i+1 to n 
+3. Based on condition increment answer
+
+-> Iterating through all substrings
+
+Approach: Variable size sliding window -> Counting
+Time Complexity: O(n)
+Space Complexity: O(1)
+1. Start with i that would be used for exterior loop iteration
+2. The basic idea is when we have the condition satisfied for the window.. we try to shrink it down until it is invalid.
+3. That makes until this invalid position all the previous elements would be helpful for condition to be satisfied later.
+4. So the start becomes the first invalid position.
+
+Whenever the window satisfies the condition, I keep removing characters from the left until removing one more would make it invalid. At that point, every left boundary before start has already been shown to produce a valid substring ending at the current i, so I can add start to the answer.
+
+Learning:
+1. What makes the window valid !!?
+2. Once the window is valid -> can i shrink it ??
+3. What does the left pointer must denote inorder to get the correct answer.
+
+The time complexity scenario for loops 
+-> How many total times does the inner loop execute over the entire algorithm?
+-> This idea is called amortized analysis. Instead of asking how expensive one iteration can be, you ask:
+
+"Over the entire execution, how many times can this expensive operation happen?"
+
+Mistakes:
+1. Didnt handle duplicate characters case 
+2. Choosing the j / start as the leftmost index after removing duplicates. [Counting logic]
+
+Code:
+# Sliding Window Approach
+class Solution:
+    def numberOfSubstrings(self, s: str) -> int:
+        n = len(s)
+        ans = 0
+        d = {}
+        start = 0 
+        for i in range(n):
+            d[s[i]] = d.get(s[i], 0) + 1
+            while len(d) == 3:
+                if start < n:
+                    d[s[start]] -= 1
+                    if d[s[start]] == 0:
+                        d.pop(s[start])
+                start+=1
+            ans+=start
+        return ans
+
+
+# Brute Force Approach
+
+class Solution:
+    def numberOfSubstrings(self, s: str) -> int:
+        n = len(s)
+        ans = 0
+        for i in range(n):
+            temp = s[i]
+            for j in range(i+1,n):
+                temp += s[j]
+                if ('a' in temp) and ('b' in temp) and ('c' in temp):
+                    ans+=1
+        return ans

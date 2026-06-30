@@ -8,6 +8,8 @@ import { AnalyticsDashboard } from './components/AnalyticsDashboard';
 import { TagsExplorer } from './components/TagsExplorer';
 import { Toaster } from 'react-hot-toast';
 import { useGlobalKeyboardShortcuts } from './hooks/useGlobalKeyboardShortcuts';
+import { useIsMobile } from './hooks/useIsMobile';
+import { cn } from './utils/cn';
 
 const GlobalShortcuts = () => {
   useGlobalKeyboardShortcuts();
@@ -39,23 +41,31 @@ const ContentWrapper = () => {
 
 const RootLayout = () => {
   const { isSidebarOpen, setIsSidebarOpen } = useData();
+  const isMobile = useIsMobile();
 
   return (
     <div className="flex min-h-dvh h-dvh bg-[#050505] text-slate-300 font-sans overflow-hidden relative safe-area-x">
-      {/* Mobile overlay */}
-      {isSidebarOpen && (
-        <div 
-          className="fixed inset-0 bg-black/80 z-20 md:hidden transition-opacity duration-300"
+      {isMobile && isSidebarOpen && (
+        <div
+          className="fixed inset-0 bg-black/80 z-20 transition-opacity duration-300"
           onClick={() => setIsSidebarOpen(false)}
+          aria-hidden="true"
         />
       )}
-      
-      {/* Sidebar - fixed on mobile, relative on desktop */}
-      <div className={`fixed inset-y-0 left-0 z-30 md:relative transition-transform duration-300 ease-in-out ${isSidebarOpen ? "translate-x-0" : "-translate-x-full md:translate-x-0"}`}>
+
+      <div
+        className={cn(
+          'shrink-0 h-full transition-[width,transform] duration-300 ease-in-out overflow-hidden',
+          isMobile ? 'fixed inset-y-0 left-0 z-30 w-64' : 'relative',
+          isMobile
+            ? isSidebarOpen ? 'translate-x-0' : '-translate-x-full'
+            : isSidebarOpen ? 'w-64' : 'w-0'
+        )}
+      >
         <Sidebar />
       </div>
 
-      <main className="flex-1 flex flex-col min-w-0 h-full overflow-hidden relative z-10 w-full">
+      <main className="flex-1 flex flex-col min-w-0 h-full overflow-hidden relative z-10">
         <ContentWrapper />
       </main>
     </div>
@@ -81,7 +91,7 @@ export default function App() {
           },
           success: {
              iconTheme: {
-                primary: '#818CF8', // indigo-400
+                primary: '#818CF8',
                 secondary: '#111',
              }
           }

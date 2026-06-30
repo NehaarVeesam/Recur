@@ -30,6 +30,7 @@ interface DataContextType {
   setFilterDifficulty: (d: string | null) => void;
   isSidebarOpen: boolean;
   setIsSidebarOpen: (b: boolean) => void;
+  toggleSidebar: () => void;
   createModeFilename: string | null;
   setCreateModeFilename: (filename: string | null) => void;
   registerLeaveConfirm: (fn: LeaveConfirmFn | null) => void;
@@ -43,6 +44,15 @@ export const useData = () => {
   return ctx;
 };
 
+const SIDEBAR_STORAGE_KEY = 'recur:sidebar-open';
+
+function getInitialSidebarOpen(): boolean {
+  if (typeof window === 'undefined') return true;
+  const stored = localStorage.getItem(SIDEBAR_STORAGE_KEY);
+  if (stored !== null) return stored === 'true';
+  return window.matchMedia('(min-width: 768px)').matches;
+}
+
 export const DataProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const [problems, setProblems] = useState<Problem[]>([]);
   const [loading, setLoading] = useState(true);
@@ -54,7 +64,26 @@ export const DataProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const [selectedProblemInfo, setSelectedProblemInfo] = useState<Problem | null>(null);
   const [sortBy, setSortBy] = useState<'newest' | 'oldest' | 'a-z' | 'z-a' | 'difficulty'>('newest');
   const [filterDifficulty, setFilterDifficulty] = useState<string | null>(null);
-  const [isSidebarOpen, setIsSidebarOpen] = useState(false);
+  const [isSidebarOpen, setIsSidebarOpenState] = useState(getInitialSidebarOpen);
+  const setIsSidebarOpen = useCallback((open: boolean) => {
+    setIsSidebarOpenState(open);
+    try {
+      localStorage.setItem(SIDEBAR_STORAGE_KEY, String(open));
+    } catch {
+      /* ignore quota errors */
+    }
+  }, []);
+  const toggleSidebar = useCallback(() => {
+    setIsSidebarOpenState(prev => {
+      const next = !prev;
+      try {
+        localStorage.setItem(SIDEBAR_STORAGE_KEY, String(next));
+      } catch {
+        /* ignore */
+      }
+      return next;
+    });
+  }, []);
   const [createModeFilename, setCreateModeFilename] = useState<string | null>(null);
   const leaveConfirmRef = useRef<LeaveConfirmFn | null>(null);
   const draftRestoredRef = useRef(false);
@@ -238,7 +267,7 @@ Code:
       selectedProblemInfo, navigateToProblem,
       sortBy, setSortBy,
       filterDifficulty, setFilterDifficulty,
-      isSidebarOpen, setIsSidebarOpen,
+      isSidebarOpen, setIsSidebarOpen, toggleSidebar,
       createModeFilename, setCreateModeFilename,
       registerLeaveConfirm,
     }}>

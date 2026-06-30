@@ -11,6 +11,7 @@ import {
   PlusIcon
 } from 'lucide-react';
 import { cn } from '../utils/cn';
+import { SidebarToggle } from './SidebarToggle';
 
 export const Sidebar: React.FC = () => {
   const { currentView, setCurrentView, setSelectedTag, setIsSidebarOpen, navigateToProblem, createNewProblem } = useData();
@@ -26,12 +27,12 @@ export const Sidebar: React.FC = () => {
 
   return (
     <div className="w-64 bg-[#080808] border-r border-white/5 h-full min-h-dvh flex flex-col">
-      <div className="p-6 border-b border-white/5 flex items-center gap-3">
+      <div className="flex h-16 items-center gap-2 px-4 border-b border-white/5 safe-area-top shrink-0">
         <div className="w-8 h-8 rounded-lg bg-indigo-500/20 flex items-center justify-center border border-indigo-500/40 shrink-0">
           <RepeatIcon className="w-5 h-5 text-indigo-400" />
         </div>
-        <span className="font-bold text-white tracking-tight flex-1 truncate">Recur</span>
-        
+        <span className="font-bold text-white tracking-tight flex-1 truncate min-w-0">Recur</span>
+
         <button 
           onClick={() => {
             createNewProblem();
@@ -42,6 +43,8 @@ export const Sidebar: React.FC = () => {
         >
           <PlusIcon className="w-4 h-4" />
         </button>
+
+        <SidebarToggle mode="close" className="h-8 w-8 -mr-1" />
       </div>
 
       <nav className="flex-1 px-4 py-4 space-y-1 overflow-y-auto">

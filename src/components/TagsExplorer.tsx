@@ -1,5 +1,7 @@
 import React, { useMemo } from 'react';
 import { useData } from '../context/DataContext';
+import { cn } from '../utils/cn';
+import { tagCountColorClass } from '../utils/themeColors';
 
 export const TagsExplorer: React.FC = () => {
   const { problems, setSelectedTag, setCurrentView } = useData();
@@ -34,7 +36,14 @@ export const TagsExplorer: React.FC = () => {
             className="flex items-center justify-between p-4 bg-white/5 border border-white/10 rounded-xl hover:border-indigo-500/50 hover:bg-white/10 transition-colors text-left group"
           >
             <span className="text-slate-300 font-medium group-hover:text-indigo-400 transition-colors">{tag}</span>
-            <span className="text-xs font-mono text-slate-500 bg-black/50 px-2 py-1 rounded-md">{count}</span>
+            <span
+              className={cn(
+                'text-xs font-semibold font-mono min-w-[1.75rem] text-center px-2.5 py-1 rounded-full border transition-colors',
+                tagCountColorClass(tag)
+              )}
+            >
+              {count}
+            </span>
           </button>
         ))}
       </div>

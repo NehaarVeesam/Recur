@@ -1,25 +1,19 @@
 import React from 'react';
 import { useData } from '../context/DataContext';
-import { SearchIcon, SlidersHorizontal, ArrowUpDown, MenuIcon } from 'lucide-react';
+import { SearchIcon, SlidersHorizontal, ArrowUpDown } from 'lucide-react';
+import { SidebarToggle } from './SidebarToggle';
 
 export const TopNav: React.FC = () => {
   const { 
     searchQuery, setSearchQuery, 
     sortBy, setSortBy, 
     filterDifficulty, setFilterDifficulty,
-    setIsSidebarOpen
   } = useData();
 
   return (
-    <div className="flex flex-col md:flex-row md:h-16 py-3 border-b border-white/5 bg-[#0A0A0A]/80 backdrop-blur-md md:items-center justify-between px-4 md:px-6 sticky top-0 z-10 gap-3 safe-area-top">
+    <div className="flex flex-col md:flex-row md:h-16 border-b border-white/5 bg-[#0A0A0A]/80 backdrop-blur-md md:items-center justify-between px-4 md:px-6 sticky top-0 z-10 gap-3 safe-area-top py-3 md:py-0">
       <div className="flex items-center gap-3 w-full md:w-auto flex-1 min-h-10">
-        <button 
-          className="md:hidden p-2 -ml-2 text-slate-400 hover:text-white rounded-lg"
-          onClick={() => setIsSidebarOpen(true)}
-          aria-label="Open menu"
-        >
-          <MenuIcon className="w-5 h-5" />
-        </button>
+        <SidebarToggle mode="open" />
         <div className="flex-1 flex items-center max-w-xl relative">
           <SearchIcon className="w-4 h-4 text-slate-500 absolute left-3" />
           <input 

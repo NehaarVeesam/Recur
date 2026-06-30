@@ -2,6 +2,7 @@ import React from 'react';
 import { Problem } from '../utils/parser';
 import { StarIcon } from 'lucide-react';
 import { cn } from '../utils/cn';
+import { getDifficultyTextClass, getStatusTextClass } from '../utils/themeColors';
 
 interface ProblemCardProps {
   problem: Problem;
@@ -9,13 +10,7 @@ interface ProblemCardProps {
 }
 
 export const ProblemCard: React.FC<ProblemCardProps> = ({ problem, onClick }) => {
-  const diffColors = {
-    'Easy': 'text-emerald-400',
-    'Medium': 'text-amber-400',
-    'Hard': 'text-rose-500',
-  };
-
-  const difficultyClass = diffColors[problem.difficulty as keyof typeof diffColors] || 'text-slate-500';
+  const difficultyClass = getDifficultyTextClass(problem.difficulty);
 
   return (
     <div 
@@ -27,7 +22,7 @@ export const ProblemCard: React.FC<ProblemCardProps> = ({ problem, onClick }) =>
           {problem.difficulty || 'Unknown'}
         </span>
         <div className="flex items-center gap-2">
-          {problem.favorite && <StarIcon className="w-4 h-4 fill-amber-400 text-amber-400" />}
+          {problem.favorite && <StarIcon className="w-4 h-4 fill-yellow-400 text-yellow-400" />}
         </div>
       </div>
       
@@ -55,10 +50,7 @@ export const ProblemCard: React.FC<ProblemCardProps> = ({ problem, onClick }) =>
           <span>Solved: {problem.date || 'No date'}</span>
         </div>
         {problem.status && (
-          <span className={cn(
-            problem.status === 'Need Revision' ? "text-amber-400" : 
-            problem.status === 'Mastered' ? "text-emerald-400" : "text-slate-400"
-          )}>
+          <span className={getStatusTextClass(problem.status)}>
             {problem.status}
           </span>
         )}

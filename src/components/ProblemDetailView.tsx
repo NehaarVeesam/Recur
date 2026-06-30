@@ -4,12 +4,14 @@ import { useData } from '../context/DataContext';
 import {
   ArrowLeftIcon, ClockIcon, CalendarIcon, TagIcon, StarIcon, LayoutIcon, CodeIcon,
   BookOpenIcon, AlertTriangleIcon, Edit3Icon, Trash2Icon, Maximize2Icon, CopyIcon,
-  SaveIcon, XIcon, PlusIcon, Wand2Icon, MenuIcon,
+  SaveIcon, XIcon, PlusIcon, Wand2Icon,
 } from 'lucide-react';
 import { cn } from '../utils/cn';
+import { SidebarToggle } from './SidebarToggle';
 import { titleToFilename, isDraftFilename } from '../utils/filename';
 import { saveStoredDraft, loadStoredDraft, clearStoredDraft } from '../utils/draftStorage';
 import { hasUnsavedWork, confirmDiscard } from '../utils/unsavedChanges';
+import { getDifficultyBadgeClass, getStatusButtonClass, getStatusTextClass, STATUS_COLORS } from '../utils/themeColors';
 import { useIsMobile } from '../hooks/useIsMobile';
 import { isTypingTarget } from '../hooks/useIsTypingTarget';
 import { CODE_LANGUAGE, PYTHON_EDITOR_OPTIONS } from '../utils/codeEditor';
@@ -75,11 +77,11 @@ export const ProblemDetailView: React.FC = () => {
     navigateToProblem,
     saveProblem,
     deleteProblem,
-    setIsSidebarOpen,
     createModeFilename,
     setCreateModeFilename,
     problems,
     registerLeaveConfirm,
+    isSidebarOpen,
   } = useData();
   const isMobile = useIsMobile();
   const [activeTab, setActiveTab] = useState<TabId>('overview');
@@ -615,7 +617,7 @@ export const ProblemDetailView: React.FC = () => {
                   <div className="flex items-center justify-between gap-4">
                     <input className={cn(inputClass, 'font-medium')} value={app.title} onChange={e => updateApproach(idx, 'title', e.target.value)} placeholder="Approach name" />
                     {approachesDraft.length > 1 && (
-                      <button onClick={() => removeApproach(idx)} className="text-xs text-rose-500 hover:text-rose-400 shrink-0">Remove</button>
+                      <button onClick={() => removeApproach(idx)} className="text-xs text-red-500 hover:text-red-400 shrink-0">Remove</button>
                     )}
                   </div>
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -645,7 +647,7 @@ export const ProblemDetailView: React.FC = () => {
                       {app.timeComplexity && (
                         <div className="flex items-center gap-2 bg-black/40 px-3 py-1.5 rounded-md border border-white/5">
                           <span className="text-[10px] uppercase tracking-wider text-slate-500 font-bold">Time</span>
-                          <span className="text-sm font-mono text-amber-300">{app.timeComplexity}</span>
+                          <span className="text-sm font-mono text-indigo-300">{app.timeComplexity}</span>
                         </div>
                       )}
                       {app.spaceComplexity && (
@@ -699,7 +701,7 @@ export const ProblemDetailView: React.FC = () => {
             )}
             <div className="bg-white/5 border border-white/5 rounded-xl p-6 min-h-[400px]">
               <h4 className="text-sm font-semibold text-slate-400 uppercase tracking-widest mb-4 flex items-center gap-2">
-                <AlertTriangleIcon className="w-4 h-4 text-amber-400"/> Mistakes Log
+                <AlertTriangleIcon className="w-4 h-4 text-orange-400"/> Mistakes Log
               </h4>
               {isEditing('mistakes') && mistakesDraft !== null ? (
                 <textarea className={cn(textareaClass, 'min-h-[320px]')} value={mistakesDraft} onChange={e => setMistakesDraft(e.target.value)} placeholder="Wrong approaches, bugs, edge cases missed..." />
@@ -793,11 +795,7 @@ export const ProblemDetailView: React.FC = () => {
               <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-8">
                 <div className="bg-black/30 border border-white/5 rounded-lg p-4">
                   <p className="text-[10px] uppercase tracking-widest text-slate-500 font-bold mb-2">Current Status</p>
-                  <p className={cn(
-                    'text-lg font-medium',
-                    p.status === 'Need Revision' ? 'text-amber-400' :
-                    p.status === 'Mastered' ? 'text-emerald-400' : 'text-blue-400'
-                  )}>{p.status}</p>
+                  <p className={cn('text-lg font-medium', getStatusTextClass(p.status))}>{p.status}</p>
                 </div>
                 <div className="bg-black/30 border border-white/5 rounded-lg p-4">
                   <p className="text-[10px] uppercase tracking-widest text-slate-500 font-bold mb-2">Last Revised</p>
@@ -809,24 +807,24 @@ export const ProblemDetailView: React.FC = () => {
                 </div>
               </div>
               <p className="text-sm text-slate-500 mb-4">
-                Use the buttons below after you revisit a problem. Problems marked <span className="text-amber-400">Need Revision</span> appear in the sidebar <strong className="text-slate-400">Revision Queue</strong>.
+                Use the buttons below after you revisit a problem. Problems marked <span className={STATUS_COLORS['Need Revision'].text}>Need Revision</span> appear in the sidebar <strong className="text-slate-400">Revision Queue</strong>.
               </p>
               <div className="flex flex-wrap gap-3">
                 <button
                   onClick={() => handleRevisionUpdate('Revised')}
-                  className="px-4 py-2 text-sm rounded-lg border border-blue-500/30 bg-blue-500/10 text-blue-400 hover:bg-blue-500/20 transition-colors"
+                  className={getStatusButtonClass('Revised')}
                 >
                   Mark as Revised Today
                 </button>
                 <button
                   onClick={() => handleRevisionUpdate('Mastered')}
-                  className="px-4 py-2 text-sm rounded-lg border border-emerald-500/30 bg-emerald-500/10 text-emerald-400 hover:bg-emerald-500/20 transition-colors"
+                  className={getStatusButtonClass('Mastered')}
                 >
                   Mark as Mastered
                 </button>
                 <button
                   onClick={() => handleRevisionUpdate('Need Revision')}
-                  className="px-4 py-2 text-sm rounded-lg border border-amber-500/30 bg-amber-500/10 text-amber-400 hover:bg-amber-500/20 transition-colors"
+                  className={getStatusButtonClass('Need Revision')}
                 >
                   Back to Revision Queue
                 </button>
@@ -841,15 +839,11 @@ export const ProblemDetailView: React.FC = () => {
     <div className="h-full flex flex-col bg-[#0A0A0A] min-w-0">
       <div className="flex-none px-4 sm:px-6 md:px-8 py-4 sm:py-6 border-b border-white/5 bg-[#0A0A0A]/50 backdrop-blur z-10 sticky top-0 safe-area-top">
         <div className="flex gap-2 sm:gap-3">
-          <div className="md:hidden w-10 shrink-0 flex items-start pt-0.5">
-            <button
-              className="flex h-10 w-10 items-center justify-center text-slate-400 hover:text-white rounded-lg shrink-0"
-              onClick={() => setIsSidebarOpen(true)}
-              aria-label="Open menu"
-            >
-              <MenuIcon className="w-5 h-5" />
-            </button>
-          </div>
+          {!isSidebarOpen && (
+            <div className="shrink-0 flex items-center self-start">
+              <SidebarToggle mode="open" />
+            </div>
+          )}
 
           <div className="flex-1 min-w-0">
             <button
@@ -869,17 +863,15 @@ export const ProblemDetailView: React.FC = () => {
               )}>
                 {createMode ? (overviewDraft?.title.trim() || 'New Problem') : (p.title || p.filename)}
               </h1>
-              <button onClick={handleToggleFavorite} className="text-slate-500 hover:text-amber-500 transition-colors" disabled={!!editingTab || createMode}>
-                <StarIcon className={cn('w-6 h-6', p.favorite && 'fill-amber-500 text-amber-500')} />
+              <button onClick={handleToggleFavorite} className="text-slate-500 hover:text-yellow-500 transition-colors" disabled={!!editingTab || createMode}>
+                <StarIcon className={cn('w-6 h-6', p.favorite && 'fill-yellow-500 text-yellow-500')} />
               </button>
             </div>
             <div className="flex flex-wrap items-center gap-4 text-sm text-slate-400">
               <span className="flex items-center gap-1.5 font-mono text-xs"><CalendarIcon className="w-4 h-4"/> {p.date} {p.time}</span>
               <span className={cn(
                 'px-2 py-0.5 rounded border font-medium text-[10px] uppercase tracking-wider flex items-center',
-                p.difficulty === 'Easy' ? 'bg-emerald-500/10 text-emerald-400 border-emerald-500/20' :
-                p.difficulty === 'Medium' ? 'bg-amber-500/10 text-amber-400 border-amber-500/20' :
-                'bg-rose-500/10 text-rose-500 border-rose-500/20'
+                getDifficultyBadgeClass(p.difficulty)
               )}>
                 {p.difficulty}
               </span>
@@ -898,7 +890,7 @@ export const ProblemDetailView: React.FC = () => {
               </button>
             )}
             {!createMode && (
-              <button onClick={handleDelete} title="Delete Record" className="p-2 border border-rose-900/50 text-rose-500 rounded-lg hover:bg-rose-950 transition-colors">
+              <button onClick={handleDelete} title="Delete Record" className="p-2 border border-red-900/50 text-red-500 rounded-lg hover:bg-red-950 transition-colors">
                 <Trash2Icon className="w-4 h-4" />
               </button>
             )}

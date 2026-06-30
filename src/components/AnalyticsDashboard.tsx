@@ -1,5 +1,7 @@
 import React, { useMemo } from 'react';
 import { useData } from '../context/DataContext';
+import { cn } from '../utils/cn';
+import { DIFFICULTY_COLORS, STATUS_COLORS } from '../utils/themeColors';
 
 export const AnalyticsDashboard: React.FC = () => {
   const { problems } = useData();
@@ -42,17 +44,17 @@ export const AnalyticsDashboard: React.FC = () => {
            <p className="text-[10px] tracking-wider uppercase text-slate-500 font-bold mb-1">Total Solved</p>
            <p className="text-4xl font-mono text-white">{stats.total}</p>
         </div>
-        <div className="bg-white/5 border border-t-2 border-t-emerald-500 border-white/5 rounded-xl p-5">
+        <div className={cn('bg-white/5 border border-t-2 border-white/5 rounded-xl p-5', DIFFICULTY_COLORS.Easy.borderTop)}>
            <p className="text-[10px] tracking-wider uppercase text-slate-500 font-bold mb-1">Easy</p>
-           <p className="text-4xl font-mono text-emerald-400">{stats.easy}</p>
+           <p className={cn('text-4xl font-mono', DIFFICULTY_COLORS.Easy.text)}>{stats.easy}</p>
         </div>
-        <div className="bg-white/5 border border-t-2 border-t-amber-500 border-white/5 rounded-xl p-5">
+        <div className={cn('bg-white/5 border border-t-2 border-white/5 rounded-xl p-5', DIFFICULTY_COLORS.Medium.borderTop)}>
            <p className="text-[10px] tracking-wider uppercase text-slate-500 font-bold mb-1">Medium</p>
-           <p className="text-4xl font-mono text-amber-400">{stats.medium}</p>
+           <p className={cn('text-4xl font-mono', DIFFICULTY_COLORS.Medium.text)}>{stats.medium}</p>
         </div>
-        <div className="bg-white/5 border border-t-2 border-t-rose-500 border-white/5 rounded-xl p-5">
+        <div className={cn('bg-white/5 border border-t-2 border-white/5 rounded-xl p-5', DIFFICULTY_COLORS.Hard.borderTop)}>
            <p className="text-[10px] tracking-wider uppercase text-slate-500 font-bold mb-1">Hard</p>
-           <p className="text-4xl font-mono text-rose-500">{stats.hard}</p>
+           <p className={cn('text-4xl font-mono', DIFFICULTY_COLORS.Hard.text)}>{stats.hard}</p>
         </div>
       </div>
 
@@ -63,28 +65,28 @@ export const AnalyticsDashboard: React.FC = () => {
             <div>
               <div className="flex justify-between text-sm mb-1">
                 <span className="text-slate-400">Mastered</span>
-                <span className="text-emerald-400 font-mono">{stats.mastered}</span>
+                <span className={cn('font-mono', STATUS_COLORS.Mastered.text)}>{stats.mastered}</span>
               </div>
               <div className="h-1.5 w-full bg-black/50 rounded-full overflow-hidden">
-                <div className="h-full bg-emerald-500" style={{ width: `${stats.total ? (stats.mastered/stats.total)*100 : 0}%`}}></div>
+                <div className={cn('h-full', STATUS_COLORS.Mastered.bar)} style={{ width: `${stats.total ? (stats.mastered/stats.total)*100 : 0}%`}}></div>
               </div>
             </div>
             <div>
               <div className="flex justify-between text-sm mb-1">
                 <span className="text-slate-400">Revised</span>
-                <span className="text-blue-400 font-mono">{stats.revised}</span>
+                <span className={cn('font-mono', STATUS_COLORS.Revised.text)}>{stats.revised}</span>
               </div>
               <div className="h-1.5 w-full bg-black/50 rounded-full overflow-hidden">
-                <div className="h-full bg-blue-500" style={{ width: `${stats.total ? (stats.revised/stats.total)*100 : 0}%`}}></div>
+                <div className={cn('h-full', STATUS_COLORS.Revised.bar)} style={{ width: `${stats.total ? (stats.revised/stats.total)*100 : 0}%`}}></div>
               </div>
             </div>
             <div>
               <div className="flex justify-between text-sm mb-1">
                 <span className="text-slate-400">Need Revision</span>
-                <span className="text-amber-400 font-mono">{stats.needRev}</span>
+                <span className={cn('font-mono', STATUS_COLORS['Need Revision'].text)}>{stats.needRev}</span>
               </div>
               <div className="h-1.5 w-full bg-black/50 rounded-full overflow-hidden">
-                <div className="h-full bg-amber-500" style={{ width: `${stats.total ? (stats.needRev/stats.total)*100 : 0}%`}}></div>
+                <div className={cn('h-full', STATUS_COLORS['Need Revision'].bar)} style={{ width: `${stats.total ? (stats.needRev/stats.total)*100 : 0}%`}}></div>
               </div>
             </div>
           </div>
