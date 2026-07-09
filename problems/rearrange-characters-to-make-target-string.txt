@@ -1,0 +1,49 @@
+Title: Rearrange Characters to Make target String
+Date: 2026-06-22
+Difficulty: Easy
+Tags: String, Hash Map, Counting
+Platform: Leetcode - 2287
+Favorite: false
+Status: Need Revision
+
+Statement:
+You are given two 0-indexed strings s and target. You can take some letters from s and rearrange them to form new strings.
+
+Return the maximum number of copies of target that can be formed by taking letters from s and rearranging them.
+
+Approach: Hash Map
+Time Complexity: O(n)
+Space Complexity: O(1)
+1. Create a frequency map of the given string.
+2. Then create a frequency map of target string
+3. The number of complete copies of target that can be formed is limited by the character with the smallest ratio: [required count / available count​ ]
+
+Why divide?
+If a character appears multiple times in target, you need enough copies of that character
+
+4. So divide each of the target freq by given freq so that we get minimum of complete one.
+
+Learning:
+Simply saying the approach is 
+simply if the target string has 3 'c' s and in the given string there are 7 'c's then definitely we can make the target strings of 7//3 -> 2 right .. so that is the reason we are dividing with frequency.
+
+Mistakes:
+
+
+Code:
+class Solution:
+    def rearrangeCharacters(self, s: str, target: str) -> int:
+        d = {}
+        freq = {}
+        for i in target:
+            if i not in freq:
+                freq[i] = 1
+            else:
+                freq[i] += 1
+            d[i] = 0
+        for ch in s:
+            if ch in target:
+                d[ch] += 1
+        for j in freq.keys():
+            d[j] = d[j] // freq[j]
+        return min(d.values())

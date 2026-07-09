@@ -1,0 +1,35 @@
+Title: Angle between Hands of a Clock
+Date: 2026-06-18
+Difficulty: Medium
+Tags: Math
+Platform: Leetcode - 1344
+Favorite: false
+Status: Need Revision
+
+Statement:
+Given two numbers, hour and minutes, return the smaller angle (in degrees) formed between the hour and the minute hand.
+
+Answers within 10-5 of the actual value will be accepted as correct.
+
+Approach: Math Concept
+Time Complexity: O(1)
+Space Complexity: O(1)
+1. Clock has complete 360 degrees , and we have 12 hour hand so between each we have 360/12 -> 30 degrees
+2. Minute hand completes 1 full revolution (circle -> 360 deg) in 60 minutes , therefore in 1 minute the minute hand moves 6 degrees
+3. Similarly the hour hand completes full 1 revolution in 12 hours which is 720 minutes , therefore in 1 hour the hour hand moves 30 degrees
+4. So in 60 minutes the hour hand moves 30 degrees , in 1 minute the hour hand moves 0.5 degrees 
+Therefore hour angle -> 30* (hour value) + 0.5 * (minute value)
+And minute angle -> 6*(minute value)
+
+Difference between hour and minute hand is | 30* (hour value) + 0.5 * (minute value) - 6*(minute value)|
+
+Learning:
+1. Maths concept of hour angle and minute angle
+
+Mistakes:
+While finding out the smallest angle , you need to check 360 degrees - also to get smallest value
+
+Code:
+class Solution:
+    def angleClock(self, h: int, m: int) -> float:
+        return min(abs(30*(h%12) + 0.5*m - 6*m), 360 - abs(30*(h%12) + 0.5*m - 6*m))

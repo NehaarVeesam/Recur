@@ -1,0 +1,122 @@
+Title: Find the safest path in grid
+Date: 2026-07-01
+Difficulty: Medium
+Tags: Binary Search, BFS, Matrix
+Platform: Leetcode - 2812
+Favorite: false
+Status: Need Revision
+
+Statement:
+You are given a 0-indexed 2D matrix grid of size n x n, where (r, c) represents:
+
+A cell containing a thief if grid[r][c] = 1
+An empty cell if grid[r][c] = 0
+You are initially positioned at cell (0, 0). In one move, you can move to any adjacent cell in the grid, including cells containing thieves.
+
+The safeness factor of a path on the grid is defined as the minimum manhattan distance from any cell in the path to any thief in the grid.
+
+Return the maximum safeness factor of all paths leading to cell (n - 1, n - 1).
+
+An adjacent cell of cell (r, c), is one of the cells (r, c + 1), (r, c - 1), (r + 1, c) and (r - 1, c) if it exists.
+
+The Manhattan distance between two cells (a, b) and (x, y) is equal to |a - x| + |b - y|, where |val| denotes the absolute value of val.
+
+Approach: BFS + Binary Search + DFS
+Time Complexity: O(mnlog(m+n))
+Space Complexity: O(mn)
+1. Create a multi source BFS queue where the value is 1 
+2. Start BFS and create the distance matrix [As BFS gives the nearest distance by default]
+3. Find out the maximum value in distance matrix to get the answer space -> {0,max_value}
+4. Now do the binary search on {0, max_value} pass mid value to DFS / BFS
+5. Goal is -> Traversing through each paths where the mid is only the minimum value
+6. In dfs , start with (0,0) 
+-> Base Cases - If r,c is last cell return True , and if distance[r][c] is less than mid value return False
+7. Mark it visited and iterate in all 4 directions and only if distance of it is greater than mid only do dfs 
+
+
+Time complexity 
+BFS + Grid Traversals -> O(mn)
+Binary Search -> O(max_value) is O(m+n)
+DFS -> O(mn)
+
+So total -> O(mnlog(m+n))
+
+Space Complexity -> O(mn)
+
+Learning:
+1. Multi-source BFS efficiently computes the shortest distance to the nearest source.
+2. Whenever we want to find the (minimum of Maximums) or (maximum of minimums) -> Binary Search 
+3. We start with all thieves initially and check for all 4 positions and get their distance value and update it with incrementing by 1 and push that position in the queue and close that case by marking it 1.
+4. Binary searching the answer itself [Monotonic Property Key]
+5. Binary Search l, mid , high 
+-> If dfs(mid) works, then mid is a valid answer. Since the question asks for the maximum safeness factor, search the right half : low = mid +1
+-> Otherwise, mid is invalid, so search the left half: high = mid -1
+-> When the loop ends, low > high.
+high points to the largest valid safeness factor
+low points to the smallest invalid safeness factor
+
+Mistakes:
+1. didnt create a fresh visited matrix for dfs purpose 
+2. Confusion regarding low and high in binary search
+3. While in traversal of DFS didnt check the distance check
+
+Code:
+#  BFS + BS + DFS
+from collections import deque
+class Solution:
+    def maximumSafenessFactor(self, grid: List[List[int]]) -> int:
+        rows = len(grid)
+        cols = len(grid[0])
+        vis = [[0 for i in range(cols)] for j in range(rows)]
+        dis = [[0 for i in range(cols)] for j in range(rows)]
+        opr = [1,0,-1,0]
+        opc = [0,1,0,-1]
+
+        def dfs(target,dfsr,dfsc,dfs_vis):
+            if dfsr == rows-1 and dfsc == cols-1:
+                return True
+            if dis[dfsr][dfsc] < target:
+               return False
+            dfs_vis[dfsr][dfsc] = 1
+            for m,n in zip(opr,opc):
+                new_r = dfsr + m
+                new_c = dfsc + n
+                if 0 <= new_r < rows and 0 <= new_c < cols and dfs_vis[new_r][new_c] == 0 and dis[new_r][new_c]>=target: 
+                    if dfs(target,new_r, new_c, dfs_vis):
+                        return True
+            return False
+
+        q = deque()
+        for i in range(rows):
+            for j in range(cols):
+                if grid[i][j] == 1:
+                    q.append((i,j))
+                    vis[i][j] = 1
+
+        while q:
+            r,c = q.popleft()
+            for dr,dj in zip(opr,opc):
+                nr = r + dr
+                nc = c + dj
+                if 0 <= nr < rows and 0 <= nc < cols:
+                    if vis[nr][nc] == 0:
+                        dis[nr][nc] = dis[r][c] + 1 # Updating the distance 
+                        vis[nr][nc] = 1 # this is the shortest distance it gets , so visited
+                        q.append((nr,nc))
+        max_v = 0
+        for i in range(rows):
+            for j in range(cols):
+                max_v = max(max_v, dis[i][j])
+        low = 0
+        high = max_v
+        print(dis)
+        while low <= high:
+            mid = ( low + high ) // 2
+            # print(mid)
+            dfs_vis = [[0 for i in range(cols)] for j in range(rows)]
+            if dfs(mid,0,0,dfs_vis):
+                low = mid + 1
+            else:
+                high = mid -1
+
+        return high

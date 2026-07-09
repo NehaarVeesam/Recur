@@ -1,0 +1,48 @@
+Title: Concatenate Non Zero Digits and Multiply by Sum 1
+Date: 2026-07-08
+Difficulty: Easy
+Tags: Math
+Platform: Leetcode - 3754
+Favorite: false
+Status: Revised
+Last Revised: 2026-07-09
+
+Statement:
+You are given an integer n.
+
+Form a new integer x by concatenating all the non-zero digits of n in their original order. If there are no non-zero digits, x = 0.
+
+Let sum be the sum of digits in x.
+
+Return an integer representing the value of x * sum.
+
+Approach: Traverse from Left to Right
+Time Complexity: O(n)
+Space Complexity: O(n)
+1. Traverse from left to right and based on the conditions calculate string , and sum and return the answer 
+
+Time Complexity -> O(d) [Iterating over number of digitis]
+Space Complexity -> O(d) [Constructing max number of digits]
+
+Learning:
+1. Instead of trying to convert to string and later to integer ... too much complicated ..
+
+Mistakes:
+1. Forgot to include base case where n = 0.
+
+Code:
+# Traversing from left to right
+class Solution:
+    def sumAndMultiply(self, n: int) -> int:
+        if n == 0:
+            return 0
+
+        temp = ""
+        summ = 0
+
+        for digit in str(n):
+            if digit != "0":
+                temp += digit
+                summ += int(digit)
+
+        return int(temp) * summ

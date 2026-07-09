@@ -1,6 +1,6 @@
 import React from 'react';
 import { useData } from '../context/DataContext';
-import { SearchIcon, SlidersHorizontal, ArrowUpDown } from 'lucide-react';
+import { SearchIcon, SlidersHorizontal, ArrowUpDown, PlusIcon } from 'lucide-react';
 import { SidebarToggle } from './SidebarToggle';
 
 export const TopNav: React.FC = () => {
@@ -8,6 +8,7 @@ export const TopNav: React.FC = () => {
     searchQuery, setSearchQuery, 
     sortBy, setSortBy, 
     filterDifficulty, setFilterDifficulty,
+    createNewProblem,
   } = useData();
 
   return (
@@ -27,6 +28,14 @@ export const TopNav: React.FC = () => {
       </div>
 
       <div className="flex items-center gap-2 overflow-x-auto no-scrollbar w-full md:w-auto shrink-0 pb-1 md:pb-0">
+        <button
+          onClick={createNewProblem}
+          className="shrink-0 inline-flex items-center gap-1.5 h-9 px-3 text-sm text-indigo-300 border border-indigo-500/30 bg-indigo-500/10 rounded-md hover:bg-indigo-500/20 transition-colors"
+          title="Create New Problem (Ctrl+N)"
+        >
+          <PlusIcon className="w-4 h-4" />
+          <span className="hidden sm:inline">New Problem</span>
+        </button>
         <div className="flex items-center gap-2 relative shrink-0">
           <ArrowUpDown className="w-4 h-4 text-slate-500 absolute left-2 pointer-events-none" />
           <select 

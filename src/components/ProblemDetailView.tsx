@@ -837,73 +837,83 @@ export const ProblemDetailView: React.FC = () => {
 
   return (
     <div className="h-full flex flex-col bg-[#0A0A0A] min-w-0">
-      <div className="flex-none px-4 sm:px-6 md:px-8 py-4 sm:py-6 border-b border-white/5 bg-[#0A0A0A]/50 backdrop-blur z-10 sticky top-0 safe-area-top">
-        <div className="flex gap-2 sm:gap-3">
+      <div className="flex-none border-b border-white/5 bg-[#0A0A0A]/50 backdrop-blur z-10 sticky top-0 safe-area-top">
+        <div className="flex items-center gap-1 px-4 sm:px-6 md:px-8 h-12">
           {!isSidebarOpen && (
-            <div className="shrink-0 flex items-center self-start">
-              <SidebarToggle mode="open" />
-            </div>
+            <SidebarToggle mode="open" className="h-9 w-9 shrink-0" />
           )}
+          <button
+            onClick={() => navigateToProblem(null)}
+            className="inline-flex min-h-10 items-center gap-2 rounded-lg px-2 text-slate-400 hover:text-white hover:bg-white/5 text-sm transition-colors group min-w-0"
+          >
+            <ArrowLeftIcon className="w-4 h-4 shrink-0 group-hover:-translate-x-1 transition-transform" />
+            <span className="truncate">Back to Problems</span>
+          </button>
+        </div>
 
-          <div className="flex-1 min-w-0">
-            <button
-              onClick={() => navigateToProblem(null)}
-              className="inline-flex h-10 items-center gap-2 rounded-lg px-2 -ml-2 mb-3 sm:mb-4 text-slate-400 hover:text-white hover:bg-white/5 text-sm transition-colors group"
-            >
-              <ArrowLeftIcon className="w-4 h-4 group-hover:-translate-x-1 transition-transform" />
-              Back to Problems
-            </button>
-
-        <div className="flex flex-col md:flex-row md:items-start justify-between gap-4">
-          <div className="min-w-0">
-            <div className="flex flex-wrap items-center gap-2 sm:gap-3 mb-2">
-              <h1 className={cn(
-                'text-xl sm:text-2xl md:text-3xl font-bold tracking-tight break-words',
-                createMode && !overviewDraft?.title.trim() ? 'text-slate-500 italic' : 'text-white'
-              )}>
-                {createMode ? (overviewDraft?.title.trim() || 'New Problem') : (p.title || p.filename)}
-              </h1>
-              <button onClick={handleToggleFavorite} className="text-slate-500 hover:text-yellow-500 transition-colors" disabled={!!editingTab || createMode}>
-                <StarIcon className={cn('w-6 h-6', p.favorite && 'fill-yellow-500 text-yellow-500')} />
-              </button>
+        <div className="px-4 sm:px-6 md:px-8 pb-3 pt-1">
+          <div className="flex items-start justify-between gap-3">
+            <div className="min-w-0 flex-1">
+              <div className="flex items-start gap-2 sm:gap-3 mb-2">
+                <h1 className={cn(
+                  'text-xl sm:text-2xl md:text-3xl font-bold tracking-tight break-words min-w-0 flex-1',
+                  createMode && !overviewDraft?.title.trim() ? 'text-slate-500 italic' : 'text-white'
+                )}>
+                  {createMode ? (overviewDraft?.title.trim() || 'New Problem') : (p.title || p.filename)}
+                </h1>
+                <button
+                  onClick={handleToggleFavorite}
+                  className="text-slate-500 hover:text-yellow-500 transition-colors shrink-0 mt-0.5"
+                  disabled={!!editingTab || createMode}
+                >
+                  <StarIcon className={cn('w-6 h-6', p.favorite && 'fill-yellow-500 text-yellow-500')} />
+                </button>
+              </div>
+              <div className="flex flex-wrap items-center gap-x-4 gap-y-2 text-sm text-slate-400">
+                <span className="flex items-center gap-1.5 font-mono text-xs">
+                  <CalendarIcon className="w-4 h-4 shrink-0" /> {p.date} {p.time}
+                </span>
+                <span className={cn(
+                  'px-2 py-0.5 rounded border font-medium text-[10px] uppercase tracking-wider',
+                  getDifficultyBadgeClass(p.difficulty)
+                )}>
+                  {p.difficulty}
+                </span>
+              </div>
             </div>
-            <div className="flex flex-wrap items-center gap-4 text-sm text-slate-400">
-              <span className="flex items-center gap-1.5 font-mono text-xs"><CalendarIcon className="w-4 h-4"/> {p.date} {p.time}</span>
-              <span className={cn(
-                'px-2 py-0.5 rounded border font-medium text-[10px] uppercase tracking-wider flex items-center',
-                getDifficultyBadgeClass(p.difficulty)
-              )}>
-                {p.difficulty}
-              </span>
-            </div>
-          </div>
 
-          <div className="flex items-center gap-3">
-            {createMode && (
-              <button
-                onClick={handleSaveAll}
-                disabled={saving}
-                className="flex items-center gap-2 px-4 py-2.5 sm:py-2 min-h-11 text-sm font-medium text-white bg-indigo-600 hover:bg-indigo-500 rounded-lg transition-colors disabled:opacity-50"
-              >
-                <SaveIcon className="w-4 h-4" />
-                {saving ? 'Saving…' : 'Save Problem'}
-              </button>
-            )}
-            {!createMode && (
-              <button onClick={handleDelete} title="Delete Record" className="p-2 border border-red-900/50 text-red-500 rounded-lg hover:bg-red-950 transition-colors">
-                <Trash2Icon className="w-4 h-4" />
-              </button>
-            )}
+            <div className="flex items-center gap-2 shrink-0">
+              {createMode && (
+                <button
+                  onClick={handleSaveAll}
+                  disabled={saving}
+                  className="flex items-center gap-2 px-3 py-2 sm:px-4 min-h-10 text-sm font-medium text-white bg-indigo-600 hover:bg-indigo-500 rounded-lg transition-colors disabled:opacity-50"
+                >
+                  <SaveIcon className="w-4 h-4" />
+                  <span className="hidden sm:inline">{saving ? 'Saving…' : 'Save Problem'}</span>
+                  <span className="sm:hidden">{saving ? '…' : 'Save'}</span>
+                </button>
+              )}
+              {!createMode && (
+                <button
+                  onClick={handleDelete}
+                  title="Delete Record"
+                  className="flex h-10 w-10 items-center justify-center border border-red-900/50 text-red-500 rounded-lg hover:bg-red-950 transition-colors"
+                >
+                  <Trash2Icon className="w-4 h-4" />
+                </button>
+              )}
+            </div>
           </div>
         </div>
 
-        <div className="flex items-center gap-4 sm:gap-6 mt-6 sm:mt-8 overflow-x-auto no-scrollbar">
+        <div className="flex items-center gap-4 sm:gap-6 px-4 sm:px-6 md:px-8 overflow-x-auto no-scrollbar border-t border-white/5 pt-1">
           {(['overview', 'approach', 'learning', 'mistakes', 'code', 'revision'] as const).map(tab => (
             <button
               key={tab}
               onClick={() => handleTabChange(tab)}
               className={cn(
-                'pb-3 text-sm font-medium capitalize border-b-2 transition-colors whitespace-nowrap',
+                'pb-3 text-sm font-medium capitalize border-b-2 transition-colors whitespace-nowrap shrink-0',
                 activeTab === tab
                   ? 'border-indigo-400 text-indigo-400'
                   : 'border-transparent text-slate-500 hover:text-slate-300 hover:border-slate-700',
@@ -913,8 +923,6 @@ export const ProblemDetailView: React.FC = () => {
               {tab}
             </button>
           ))}
-        </div>
-          </div>
         </div>
       </div>
 

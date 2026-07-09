@@ -1,0 +1,62 @@
+Title: Process String with Special Operations 1
+Date: 2026-06-17
+Difficulty: Medium
+Tags: String
+Platform: Leetcode - 3612
+Favorite: false
+Status: Need Revision
+
+Statement:
+You are given a string s consisting of lowercase English letters and the special characters: *, #, and %.
+
+Build a new string result by processing s according to the following rules from left to right:
+
+If the letter is a lowercase English letter append it to result.
+A '*' removes the last character from result, if it exists.
+A '#' duplicates the current result and appends it to itself.
+A '%' reverses the current result.
+Return the final string result after processing all characters in s.
+
+Approach: Simulation
+Time Complexity: O(n)
+Space Complexity: O(1)
+Traverse the input string from left to right while maintaining the current result (ans).based on the conditions
+
+time complexity -> length of string
+space complexity -> length of string
+
+Learning:
+1. Ascii value function -> ord(s[i]), 
+a -> 97 to z -> 123
+A -> 65 to Z -> 90 
+0 -> 48 to 9 -> 57
+
+2. Smartly use the if else condition , no need to go sequentially...
+for example checking the available straight forward cases must be checked initially .. 
+instead of checking the characters from a to z push it to else case.
+
+Mistakes:
+
+
+Code:
+# Simulation
+class Solution:
+    def processStr(self, s: str) -> str:
+        ans = ""
+        for i in range(len(s)):
+            if ord(s[i]) >=97 and ord(s[i]) <= 123:
+                ans+=s[i]
+            elif s[i] == '*':
+                if len(ans) != 0:
+                    ans =  ans[:-1]
+            elif s[i] == '#':
+                ans = ans + ans
+            else:
+                ans = ans[::-1]
+        return ans
+        
+'''
+Good practice
+if 'a' <= s[i] <= 'z':
+if 97 <= ord(s[i]) <= 122:
+'''

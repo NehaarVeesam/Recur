@@ -1,0 +1,88 @@
+Title: Find a Safe Walk Through a Grid
+Date: 2026-07-02
+Difficulty: Medium
+Tags: BFS, DFS, Graphs, Matrix, Shortest Path
+Platform: Leetcode - 3286
+Favorite: false
+Status: Need Revision
+
+Statement:
+You are given an m x n binary matrix grid and an integer health.
+
+You start on the upper-left corner (0, 0) and would like to get to the lower-right corner (m - 1, n - 1).
+
+You can move up, down, left, or right from one cell to another adjacent cell as long as your health remains positive.
+
+Cells (i, j) with grid[i][j] = 1 are considered unsafe and reduce your health by 1.
+
+Return true if you can reach the final cell with a health value of 1 or more, and false otherwise.
+
+Approach: DFS + Optimization
+Time Complexity: O(mn*health)
+Space Complexity: O(mn)
+1. Create a visited matrix with all 0s , best_health matrix k with all -1s
+2. Start dfs from 0,0,health
+3. Base cases -> if health is <=0 then return False, if r,c is last cell then return True [order of base cases is important]
+4. Keep the vis as 1 
+5. Check for the best_health value [logic here is for example if h = 5 is already failed , then there's no point in checking for h = 4] thus if the present health is less than or equal to best_height[r][c] then instantly return false 
+6. The above step is used for optimzation purpose to stop visiting the same cell once again with less health value and update the best_h value as h
+7. Then check for 4 directions which are unvisited and update health accordingly.
+
+-> Visiting matrix is used for stopping same cell visit as infinite recursion is on cards 
+-> Best Health matrix is used for optimization where if already a cell has gone through it and failed .. no point in checking for low health values ... 
+as there are already base conditions above if it came to that line .. it failed already right.
+-> you only explore a cell again if you reach it with strictly more health than before.
+
+Learning:
+1.  Base cases order is vital in getting the accurate answer
+2. DFS on graphs requires thinking in terms of states, not just nodes.
+3. Backtracking isn't always appropriate. -> If the problem asks whether a state has already been explored optimally, revisiting it is wasteful.
+4. When transitions have costs (0 or 1 here), think of shortest-path algorithms like 0-1 BFS or Dijkstra instead of exhaustive DFS.
+
+Mistakes:
+1. Using the default dfs approach -> forgot to use visited matrix 
+2. In dfs function reordering of base cases got me wrong answer
+3. Due to unmarking after visiting that is the backtracking , it makes exploring the same cell through different ways [TLE]
+4.Incorrect memoization logic:
+I assumed reaching a cell with more health meant success (return True).
+In reality, it only means the weaker state can be pruned; it does not prove a path exists.
+
+Code:
+# DFS + Optimization
+class Solution:
+    def findSafeWalk(self, grid: List[List[int]], health: int) -> bool:
+        rows = len(grid)
+        cols = len(grid[0])
+        vis = [[0 for i in range(cols)] for j in range(rows)]
+        best_h = [[-1 for i in range(cols)] for j in range(rows)]
+
+        opr = [1,0,-1,0]
+        opc = [0,1,0,-1]
+        def dfs(row, col, h):
+            if h <= 0:
+                return False
+            if row == rows-1 and col == cols-1:
+                return True
+            if best_h[row][col] >= h:
+                return False
+            vis[row][col] = 1
+            best_h[row][col] = h
+            for m,n in zip(opr,opc):
+                nr = row + m
+                nc = col + n
+                if 0 <= nr < rows and 0 <= nc < cols and vis[nr][nc] == 0:
+                    if grid[nr][nc] == 0:
+                        if dfs(nr,nc,h):
+                            return True
+                    else:
+                        if dfs(nr,nc,h-1):
+                            return True
+            vis[row][col] = 0
+            return False
+            
+        if grid[0][0]:
+            health -= 1
+        if dfs(0,0,health):
+            return True
+        else:
+            return False
