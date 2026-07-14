@@ -3,7 +3,7 @@ import {
   buildSessionToken,
   getAuthCredentials,
   safeEqualString,
-} from '../_lib/auth';
+} from '../lib/auth';
 
 export default function handler(req: VercelRequest, res: VercelResponse) {
   if (req.method !== 'POST') {
