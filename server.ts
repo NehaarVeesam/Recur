@@ -1,10 +1,76 @@
 import express from "express";
 import path from "path";
 import fs from "fs/promises";
+import { readFileSync } from "fs";
+import crypto from "crypto";
 import { spawn } from "child_process";
 import { createServer as createViteServer } from "vite";
 
 const DATA_DIR = path.join(process.cwd(), "problems");
+
+function loadEnvFile() {
+  try {
+    const content = readFileSync(path.join(process.cwd(), ".env"), "utf-8");
+    for (const line of content.split(/\r?\n/)) {
+      const trimmed = line.trim();
+      if (!trimmed || trimmed.startsWith("#")) continue;
+      const eq = trimmed.indexOf("=");
+      if (eq === -1) continue;
+      const key = trimmed.slice(0, eq).trim();
+      let val = trimmed.slice(eq + 1).trim();
+      if (
+        (val.startsWith('"') && val.endsWith('"')) ||
+        (val.startsWith("'") && val.endsWith("'"))
+      ) {
+        val = val.slice(1, -1);
+      }
+      if (process.env[key] === undefined) process.env[key] = val;
+    }
+  } catch {
+    // .env optional if vars are already set in the environment
+  }
+}
+
+loadEnvFile();
+
+function getAuthCredentials() {
+  const username = (process.env.R_Username || "").trim();
+  const password = process.env.R_Password ?? "";
+  return { username, password };
+}
+
+function buildSessionToken(username: string, password: string): string {
+  return crypto
+    .createHmac("sha256", password || "recur")
+    .update(`recur:${username}`)
+    .digest("hex");
+}
+
+function getExpectedToken(): string | null {
+  const { username, password } = getAuthCredentials();
+  if (!username || !password) return null;
+  return buildSessionToken(username, password);
+}
+
+function extractBearerToken(req: express.Request): string | null {
+  const header = req.headers.authorization;
+  if (typeof header === "string" && header.startsWith("Bearer ")) {
+    return header.slice(7).trim() || null;
+  }
+  return null;
+}
+
+function isAuthenticated(req: express.Request): boolean {
+  const expected = getExpectedToken();
+  if (!expected) return false;
+  const token = extractBearerToken(req);
+  if (!token || token.length !== expected.length) return false;
+  try {
+    return crypto.timingSafeEqual(Buffer.from(token), Buffer.from(expected));
+  } catch {
+    return false;
+  }
+}
 
 async function formatPythonCode(code: string): Promise<string> {
   const trimmed = code.trim();
@@ -55,6 +121,41 @@ async function startServer() {
   const PORT = Number(process.env.PORT) || 3000;
 
   app.use(express.json());
+
+  app.post("/api/login", (req, res) => {
+    const { username, password } = getAuthCredentials();
+    if (!username || !password) {
+      return res.status(500).json({ error: "Login credentials are not configured on the server" });
+    }
+
+    const inputUsername = typeof req.body?.username === "string" ? req.body.username.trim() : "";
+    const inputPassword = typeof req.body?.password === "string" ? req.body.password : "";
+
+    if (!inputUsername || !inputPassword) {
+      return res.status(400).json({ error: "Username and password are required" });
+    }
+
+    const userOk =
+      inputUsername.length === username.length &&
+      crypto.timingSafeEqual(Buffer.from(inputUsername), Buffer.from(username));
+    const passOk =
+      inputPassword.length === password.length &&
+      crypto.timingSafeEqual(Buffer.from(inputPassword), Buffer.from(password));
+
+    if (!userOk || !passOk) {
+      return res.status(401).json({ error: "Invalid username or password" });
+    }
+
+    const token = buildSessionToken(username, password);
+    res.json({ success: true, token });
+  });
+
+  app.get("/api/auth/me", (req, res) => {
+    if (!isAuthenticated(req)) {
+      return res.status(401).json({ authenticated: false });
+    }
+    res.json({ authenticated: true, username: getAuthCredentials().username });
+  });
 
   // API Routes
   app.get("/api/problems", async (req, res) => {

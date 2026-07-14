@@ -1,15 +1,18 @@
 import React from 'react';
 import { DataProvider, useData } from './context/DataContext';
+import { AuthProvider, useAuth } from './context/AuthContext';
 import { Sidebar } from './components/Sidebar';
 import { TopNav } from './components/TopNav';
 import { ProblemList } from './components/ProblemList';
 import { ProblemDetailView } from './components/ProblemDetailView';
 import { AnalyticsDashboard } from './components/AnalyticsDashboard';
 import { TagsExplorer } from './components/TagsExplorer';
+import { LoginPage } from './components/LoginPage';
 import { Toaster } from 'react-hot-toast';
 import { useGlobalKeyboardShortcuts } from './hooks/useGlobalKeyboardShortcuts';
 import { useIsMobile } from './hooks/useIsMobile';
 import { cn } from './utils/cn';
+import { RepeatIcon } from 'lucide-react';
 
 const GlobalShortcuts = () => {
   useGlobalKeyboardShortcuts();
@@ -72,12 +75,39 @@ const RootLayout = () => {
   );
 };
 
+const AuthenticatedApp = () => (
+  <DataProvider>
+    <GlobalShortcuts />
+    <RootLayout />
+  </DataProvider>
+);
+
+const AppGate = () => {
+  const { isAuthenticated, checking } = useAuth();
+
+  if (checking) {
+    return (
+      <div className="min-h-dvh w-full bg-[#050505] flex flex-col items-center justify-center gap-4 text-slate-500">
+        <div className="w-12 h-12 rounded-2xl bg-indigo-500/20 flex items-center justify-center border border-indigo-500/40">
+          <RepeatIcon className="w-6 h-6 text-indigo-400 animate-pulse" />
+        </div>
+        <p className="text-sm">Loading Recur…</p>
+      </div>
+    );
+  }
+
+  if (!isAuthenticated) {
+    return <LoginPage />;
+  }
+
+  return <AuthenticatedApp />;
+};
+
 export default function App() {
   return (
-    <DataProvider>
-      <GlobalShortcuts />
-      <RootLayout />
-      <Toaster 
+    <AuthProvider>
+      <AppGate />
+      <Toaster
         position="bottom-center"
         containerStyle={{
           bottom: 'max(1rem, env(safe-area-inset-bottom))',
@@ -90,13 +120,13 @@ export default function App() {
             fontSize: '14px',
           },
           success: {
-             iconTheme: {
-                primary: '#818CF8',
-                secondary: '#111',
-             }
-          }
-        }} 
+            iconTheme: {
+              primary: '#818CF8',
+              secondary: '#111',
+            },
+          },
+        }}
       />
-    </DataProvider>
+    </AuthProvider>
   );
 }

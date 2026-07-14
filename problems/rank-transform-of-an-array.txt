@@ -1,0 +1,42 @@
+Title: Rank Transform of an Array
+Date: 2026-07-12
+Difficulty: Easy
+Tags: Hash Map, Sorting
+Platform: Leetcode-1331
+Favorite: false
+Status: Need Revision
+
+Statement:
+Given an array of integers arr, replace each element with its rank.
+
+The rank represents how large the element is. The rank has the following rules:
+
+Rank is an integer starting from 1.
+The larger the element, the larger the rank. If two elements are equal, their rank must be the same.
+Rank should be as small as possible.
+
+Approach: Coordinate Compression (Sorting + Hashmap)
+Time Complexity: O(nlogn)
+Space Complexity: O(n)
+1. To find out the unique keys -> convert into set 
+2. Then assign rank to each element
+3. Return the array with each rank
+
+Learning:
+1. Converting a array into set doesnt sort the numbers
+
+Mistakes:
+
+
+Code:
+# Coordinate Compression (Sorting + Hashmap)
+class Solution:
+    def arrayRankTransform(self, arr: List[int]) -> List[int]:
+        d = {}
+        temp = sorted(set(arr))
+        for i in range(len(temp)):
+            d[temp[i]] = i+1
+        ans = []
+        for j in range(len(arr)):
+            ans.append(d[arr[j]])
+        return ans

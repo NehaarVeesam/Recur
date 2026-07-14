@@ -8,13 +8,16 @@ import {
   RotateCcwIcon, 
   HashIcon,
   BarChart2Icon,
-  PlusIcon
+  PlusIcon,
+  LogOutIcon,
 } from 'lucide-react';
 import { cn } from '../utils/cn';
 import { SidebarToggle } from './SidebarToggle';
+import { useAuth } from '../context/AuthContext';
 
 export const Sidebar: React.FC = () => {
   const { currentView, setCurrentView, setSelectedTag, setIsSidebarOpen, navigateToProblem, createNewProblem } = useData();
+  const { username, logout } = useAuth();
 
   const navItems = [
     { id: 'all', label: 'All Problems', icon: FolderIcon },
@@ -71,9 +74,21 @@ export const Sidebar: React.FC = () => {
         ))}
       </nav>
 
-      <div className="p-4 border-t border-white/5 space-y-1">
-        <p className="text-[10px] text-slate-500 tracking-wide">Made by Nehaar • AI-assisted</p>
-        <p className="text-[9px] font-mono text-slate-700">© {new Date().getFullYear()} Recur</p>
+      <div className="p-4 border-t border-white/5 space-y-3">
+        <button
+          onClick={() => {
+            logout();
+            setIsSidebarOpen(false);
+          }}
+          className="w-full flex items-center gap-3 px-3 py-2 rounded-lg text-sm text-slate-400 hover:bg-white/5 hover:text-slate-200 border border-transparent transition-colors"
+        >
+          <LogOutIcon className="w-4 h-4" />
+          Sign out{username ? ` (${username})` : ''}
+        </button>
+        <div className="space-y-1 px-1">
+          <p className="text-[10px] text-slate-500 tracking-wide">Made by Nehaar • AI-assisted</p>
+          <p className="text-[9px] font-mono text-slate-700">© {new Date().getFullYear()} Recur</p>
+        </div>
       </div>
     </div>
   );
