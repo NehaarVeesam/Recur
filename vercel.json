@@ -2,6 +2,17 @@
   "buildCommand": "vite build",
   "outputDirectory": "dist",
   "framework": null,
+  "functions": {
+    "api/problems.js": {
+      "includeFiles": "problems/**"
+    },
+    "api/problems/[filename].js": {
+      "includeFiles": "problems/**"
+    },
+    "api/login.js": {
+      "maxDuration": 10
+    }
+  },
   "rewrites": [
     { "source": "/((?!api/).*)", "destination": "/index.html" }
   ]
