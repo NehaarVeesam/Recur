@@ -1,0 +1,70 @@
+Title: Longest Substring Without Repeating Characters
+Date: 2026-07-14
+Difficulty: Medium
+Tags: Hash Map, Sliding Window, String
+Platform: Leetcode-3
+Favorite: false
+Status: Need Revision
+
+Statement:
+Given a string s, find the length of the longest substring without duplicate characters.
+
+Approach: Sliding Window
+Time Complexity: O(n)
+Space Complexity: O(n)
+1. Here we use dictionary to store the length of window
+2. starting from 0 to n-1 we increment frequency , when we see freq > 1 we decrement the keys from start 
+3. As we are searching for length of substring the window needs to be shrinked , so we update start respectively under that condition.
+4. And maximum value is obtained by calculating the length of window that is i - start + 1
+
+Learning:
+1. Choose the data structure based on what the problem asks.
+    Need counts/frequencies → dict/Counter
+    Need only existence → set
+    Need last seen index → dict mapping char -> index\
+
+2. Think in terms of window expansion and contraction.
+     Expand with i.
+     Shrink with start only when the window becomes invalid.
+     This guarantees O(n) because each pointer moves at most n times.
+
+3. Use the window length formula everywhere.
+     window_length = i - start + 1
+     This works for almost every sliding window problem.
+
+4. while invalid:
+    shrink()
+
+5. dict.get() is cleaner than if-else.
+    d[x] = d.get(x, 0) + 1
+
+6. The O(n) concept 
+Each pointer only moves forward, never backward.
+Think of two people walking down a road:
+
+i (right pointer) walks from 0 → n-1 once.
+start (left pointer) also walks from 0 → n-1 once.
+
+Even though start moves inside a while loop, it never revisits an index.
+That's at most 2n operations, and 2n = O(n).
+
+Mistakes:
+1. Didn't increment start in while loop
+2. Also didnt update the value of character in else case
+
+Code:
+# Sliding window 
+class Solution:
+    def lengthOfLongestSubstring(self, s: str) -> int:
+        ans = 0
+        d = {}
+        start = 0
+        for i in range(len(s)):
+            d[s[i]] = d.get(s[i], 0) + 1 
+            while d[s[i]] > 1:
+                d[s[start]]-=1
+                if d[s[start]] == 0:
+                    d.pop(s[start])
+                start+=1
+            ans = max(ans, i-start+1)
+        return ans

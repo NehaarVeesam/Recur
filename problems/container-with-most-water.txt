@@ -1,0 +1,48 @@
+Title: Container With Most Water
+Date: 2026-07-15
+Difficulty: Medium
+Tags: Array, Two Pointers, Greedy
+Platform: Leetcode-11
+Favorite: false
+Status: Need Revision
+
+Statement:
+You are given an integer array height of length n. There are n vertical lines drawn such that the two endpoints of the ith line are (i, 0) and (i, height[i]).
+
+Find two lines that together with the x-axis form a container, such that the container contains the most water.
+
+Return the maximum amount of water a container can store.
+
+Notice that you may not slant the container.
+
+Approach: Two Pointers
+Time Complexity: O(n)
+Space Complexity: O(1)
+1. To find out most water we calculate the maximum area -> length * breadth 
+Here length is the distance between indexes 
+breadth is the minimum of both containers height (as water must be contained in between)
+2. l = 0 , r= n-1 we iterate whenever left is less than or equal to 
+3. We calculate the area as (diff between indexes) * (min of height)
+4. To find out the maximum water we move forward from whichever end is less
+
+Learning:
+1. When a problem involves an array and asks you to optimize something involving two elements, consider placing one pointer at each end.
+2. This greedy choice is correct because moving the taller line cannot improve the answer while the shorter line remains the bottleneck.
+
+Mistakes:
+
+
+Code:
+# Two Pointer Approach
+class Solution:
+    def maxArea(self, height: List[int]) -> int:
+        l = 0
+        r = len(height)-1
+        ans = 0
+        while l <= r:
+            ans = max(ans, min(height[l], height[r])*(r-l))
+            if height[l] <= height[r]:
+                l = l+1
+            else:
+                r = r-1
+        return ans
