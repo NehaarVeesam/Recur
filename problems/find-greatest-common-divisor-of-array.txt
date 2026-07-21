@@ -1,0 +1,34 @@
+Title: Find Greatest Common Divisor of Array
+Date: 2026-07-19
+Difficulty: Easy
+Tags: Array, Math, Number Theory
+Platform: Leetcode-1979
+Favorite: false
+Status: Need Revision
+
+Statement:
+Given an integer array nums, return the greatest common divisor of the smallest number and largest number in nums.
+
+The greatest common divisor of two numbers is the largest positive integer that evenly divides both numbers.
+
+Approach: GCD
+Time Complexity: O(logn)
+Space Complexity: O(1)
+1. Sort the array to find out min and max
+2. Find out the gcd of two numbers
+
+Learning:
+
+
+Mistakes:
+
+
+Code:
+class Solution:
+    def findGCD(self, nums: List[int]) -> int:
+        nums.sort()
+        s = nums[0]
+        l = nums[-1]
+        while s:
+            l,s = s, l%s
+        return l

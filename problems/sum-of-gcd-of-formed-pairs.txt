@@ -1,0 +1,70 @@
+Title: Sum of GCD of Formed Pairs
+Date: 2026-07-17
+Difficulty: Medium
+Tags: Array, Math, Sorting, Simulation, Number Theory
+Platform: Leetcode-3867
+Favorite: false
+Status: Need Revision
+
+Statement:
+You are given an integer array nums of length n.
+
+Construct an array prefixGcd where for each index i:
+
+Let mxi = max(nums[0], nums[1], ..., nums[i]).
+prefixGcd[i] = gcd(nums[i], mxi).
+After constructing prefixGcd:
+
+Sort prefixGcd in non-decreasing order.
+Form pairs by taking the smallest unpaired element and the largest unpaired element.
+Repeat this process until no more pairs can be formed.
+For each formed pair, compute the gcd of the two elements.
+If n is odd, the middle element in the prefixGcd array remains unpaired and should be ignored.
+Return an integer denoting the sum of the GCD values of all formed pairs.
+
+The term gcd(a, b) denotes the greatest common divisor of a and b.
+
+Approach: Simulaton
+Time Complexity: O(nlogn)
+Space Complexity: O(n)
+Simply follow the steps that were required to do
+
+Learning:
+GCD of finding out two numbers 
+(20,16) -> (16,4) -> (4,0) 
+gcd(large, small)
+
+while small:
+          large, small = small, large%small
+return large
+
+basically the mental model is 
+a,b = b , a%b
+Here the remainder becomes 0 at some point so keep a while loop for it and return a because in it the answer is stored
+
+Mistakes:
+1. GCD of two numbers , logic , while loop
+
+Code:
+# Simulation
+class Solution:
+    def gcdSum(self, nums: list[int]) -> int:
+        def gcd(a,b):
+            while a:
+                b,a = a, b%a
+            return b
+        n = len(nums)
+        prefixgcd = [nums[0]]
+        maxi = nums[0]
+        for i in range(1,n):
+            maxi = max(maxi, nums[i])
+            prefixgcd.append(gcd(nums[i],maxi))
+        
+        prefixgcd.sort()
+        m = n//2
+        ans = 0
+        for i in range(m):
+            ans += gcd(prefixgcd[i], prefixgcd[n-i-1])
+        return ans
+
+

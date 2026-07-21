@@ -1,0 +1,351 @@
+Title: Sorted GCD Pair Queries
+Date: 2026-07-17
+Difficulty: Hard
+Tags: Array, HashMap, Math, Binary Search, Prefix Sum, Counting, Principle
+Platform: Leetcode-3312
+Favorite: false
+Status: Need Revision
+
+Statement:
+You are given an integer array nums of length n and an integer array queries.
+
+Let gcdPairs denote an array obtained by calculating the GCD of all possible pairs (nums[i], nums[j]), where 0 <= i < j < n, and then sorting these values in ascending order.
+
+For each query queries[i], you need to find the element at index queries[i] in gcdPairs.
+
+Return an integer array answer, where answer[i] is the value at gcdPairs[queries[i]] for each query.
+
+The term gcd(a, b) denotes the greatest common divisor of a and b.
+
+Approach: Brute force Approach - Simulation
+Time Complexity: O(n^2)
+Space Complexity: O(n)
+Simulate according to the question
+- While generating for all pairs it shouldn't be of order of n square
+
+Approach: # Inclusion - Exclusion Principle + Prefix Sum + Binary Search
+Time Complexity: O(n + maxValue log(maxValue) + q log(maxValue))
+Space Complexity: O(n)
+# GCD Pair Queries – Intuition & Approach
+
+## 1. Change the Perspective
+
+The brute-force approach is:
+
+* Generate every possible pair.
+* Compute the GCD of each pair.
+* Sort all GCD values.
+* Answer the queries.
+
+This is too slow because there are **O(n²)** pairs.
+
+Instead of asking:
+
+> **"What is the GCD of every pair?"**
+
+ask:
+
+> **"For every possible GCD value, how many pairs have that GCD?"**
+
+Since the GCD of any pair can only lie between **1** and **max(nums)**, we only need to process values in this range.
+
+---
+
+## 2. Count Numbers Divisible by Each Value
+
+For every possible value `d` (from `1` to `max(nums)`), we need to know:
+
+> **How many numbers in the array are divisible by `d`?**
+
+A naïve approach would scan the entire array for every `d`, resulting in **O(maxValue × n)** time, which is too slow.
+
+### Optimization
+
+Create a **frequency array**.
+
+```text
+freq[x] = number of times x appears in nums
+```
+
+Now, instead of scanning the entire array, iterate only through the **multiples** of `d`.
+
+For example, if `d = 2`, check only:
+
+```text
+2, 4, 6, 8, 10, ...
+```
+
+For `d = 3`, check:
+
+```text
+3, 6, 9, 12, ...
+```
+
+For each multiple, add its frequency.
+
+This sieve-like approach avoids repeatedly scanning the entire array.
+
+---
+
+## 3. Compute the Number of Pairs
+
+Suppose `count[d]` is the number of elements divisible by `d`.
+
+Then the number of pairs that are divisible by `d` is:
+
+```text
+count[d] C 2
+=
+count[d] * (count[d] - 1) / 2
+```
+
+At this stage, these are **pairs whose GCD is at least `d`**, not exactly `d`.
+
+---
+
+## 4. Inclusion–Exclusion Principle
+
+When counting pairs divisible by `2`, we also count pairs whose GCD is:
+
+```text
+4, 6, 8, 10, ...
+```
+
+Those pairs should belong to their own GCD values, not to GCD `2`.
+
+Therefore,
+
+```text
+exactGCD[2]
+=
+pairsDivisibleBy2
+- exactGCD[4]
+- exactGCD[6]
+- exactGCD[8]
+- ...
+```
+
+To make this possible, process values **from largest to smallest**.
+
+By the time we compute `exactGCD[d]`, all larger multiples have already been computed and can simply be subtracted.
+
+After this step,
+
+```text
+exactGCD[d]
+```
+
+contains the **exact number of pairs whose GCD equals `d`**.
+
+---
+
+## 5. Prefix Sum
+
+Suppose the final frequencies are:
+
+```text
+GCD :   1   2   3   4
+Count:  5   3   2   4
+```
+
+Instead of constructing the sorted GCD array:
+
+```text
+1 1 1 1 1 2 2 2 3 3 4 4 4 4
+```
+
+build a prefix sum:
+
+```text
+5
+8
+10
+14
+```
+
+Meaning:
+
+* Indices **0–4** → GCD = 1
+* Indices **5–7** → GCD = 2
+* Indices **8–9** → GCD = 3
+* Indices **10–13** → GCD = 4
+
+The prefix array represents where each GCD value starts and ends in the imaginary sorted GCD array.
+
+---
+
+## 6. Answer Queries
+
+Each query asks for the GCD value at a particular index in the sorted GCD array.
+
+Instead of building that array, perform a **binary search** on the prefix sums.
+
+Example:
+
+```text
+Prefix = [5, 8, 10, 14]
+Query = 8
+```
+
+The first prefix greater than `8` is `10`, which corresponds to GCD `3`.
+
+So the answer is:
+
+```text
+3
+```
+
+Each query is answered in **O(log maxValue)** time.
+
+---
+
+# Overall Algorithm
+
+1. Find the maximum value in the array.
+2. Build a frequency array.
+3. For every value `d`, count how many numbers are divisible by `d` using its multiples.
+4. Compute `count[d] C 2` to get the number of pairs divisible by `d`.
+5. Apply inclusion–exclusion (iterate from largest to smallest) to obtain the number of pairs with **GCD exactly `d`**.
+6. Build a prefix sum over these counts.
+7. Use binary search on the prefix array to answer each query.
+
+---
+
+## Time Complexity
+
+* Build frequency array: **O(n)**
+* Count divisible numbers using multiples: **O(maxValue × log(maxValue))**
+* Inclusion–Exclusion: **O(maxValue × log(maxValue))**
+* Prefix sum: **O(maxValue)**
+* Each query: **O(log(maxValue))**
+
+Overall:
+
+```text
+O(n + maxValue log(maxValue) + q log(maxValue))
+```
+
+where:
+
+* `n` = number of elements
+* `q` = number of queries
+* `maxValue` = maximum element in `nums`
+
+Learning:
+1. Learn to Change the Perspective
+The biggest lesson from this problem is:
+Don't always solve the problem the way it is asked.
+Many hard problems become easier once you reverse your perspective.
+
+2. Replace Simulation with Counting
+Whenever the number of combinations is huge, ask:
+Can I count instead of generate?
+Can I group similar elements together?
+
+3. Instead of repeatedly scanning the input, store the occurrence of each value.
+
+4. Instead of checking every element for divisibility,
+iterate through the multiples of each divisor.
+This is the same idea used in the Sieve of Eratosthenes.
+
+Whenever you see:
+
+divisibility
+factors
+multiples
+gcd
+lcm
+
+think about iterating over multiples instead of scanning the array.
+
+5. Inclusion–Exclusion Removes Overcounting
+General idea:
+Answer = Everything that qualifies − Things that actually belong elsewhere
+
+6. Compress Large Data Using Frequencies
+
+7. Prefix Sum Represents Ranges
+Prefix sums are not just for range sums—they can represent cumulative distributions
+
+8. Binary Search on Prefix Arrays
+Once the prefix sums define ranges, binary search quickly identifies which bucket contains a query index.
+
+One additional habit that this problem reinforces is recognizing constraints as hints. When you see something like n = 10^5, it's a signal that an O(n²) approach won't work. Instead of trying to optimize the brute force, ask:
+
+Is there a way to count instead of enumerate?
+Can I precompute useful information?
+Can I answer many queries from one preprocessing step?
+
+Mistakes:
+1. Didn't identify the O(n^2) TC while calculating for every pair present in array which leads to TLE
+
+Code:
+# Inclusion - Exclusion Principle + Prefix Sum + Binary Search
+class Solution:
+    def gcdValues(self, nums: List[int], queries: List[int]) -> List[int]:
+        ans = []
+        n = len(nums)
+        maxi = max(nums)
+        divisible = []
+        freq = [0] * (maxi+1)
+        # Binary Search
+        def bs(arr,m):
+            l = 0
+            h = len(arr)-1
+            while l<=h:
+                mid = (l + h) // 2
+                if arr[mid] <= m:
+                    l = mid + 1
+                else:
+                    h = mid -1
+            return l+1
+
+        # Calculating number of divisors
+        def n_div(num):
+            count = 0
+            for i in range(num, maxi+1, num):
+                count += freq[i]
+            return count
+        
+        for num in nums:
+            freq[num]+=1
+
+        for i in range(1,maxi+1):
+            d_count = n_div(i)
+            divisible.append((d_count*(d_count-1))//2)
+        
+        # Inclusion - Exclusion Principle
+        for i in range(maxi, 0 , -1):
+            for j in range(i*2, maxi+1, i):
+                divisible[i-1]-=divisible[j-1]
+        # Prefix Sum
+        for i in range(1,maxi):
+            divisible[i] += divisible[i-1]
+
+        for i in range(len(queries)):
+            ans.append(bs(divisible, queries[i]))
+        return ans
+
+
+# Brute Force Approach
+class Solution:
+    def gcdValues(self, nums: List[int], queries: List[int]) -> List[int]:
+        ans = []
+        n = len(nums)
+        def gcd(a,b):
+            while b:
+                a,b = b,a%b
+            return a
+        gcd_pairs = []
+        for i in range(n):
+            for j in range(i+1, n):
+                if nums[i] < nums[j]:
+                    gcd_pairs.append(gcd(nums[j], nums[i]))
+                elif nums[i] > nums[j]:
+                    gcd_pairs.append(gcd(nums[i], nums[j]))
+                else:
+                    gcd_pairs.append(nums[j])
+        gcd_pairs.sort()
+        for i in queries:
+            ans.append(gcd_pairs[i])
+        return ans

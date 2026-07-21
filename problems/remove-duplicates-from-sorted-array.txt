@@ -1,0 +1,39 @@
+Title: Remove Duplicates from Sorted Array
+Date: 2026-07-21
+Difficulty: Easy
+Tags: Array, Two Pointers
+Platform: Leetcode-26
+Favorite: false
+Status: Need Revision
+
+Statement:
+Given an integer array nums sorted in non-decreasing order, remove the duplicates in-place such that each unique element appears only once. The relative order of the elements should be kept the same.
+
+Consider the number of unique elements in nums to be k​​​​​​​​​​​​​​. After removing duplicates, return the number of unique elements k.
+
+The first k elements of nums should contain the unique numbers in sorted order. The remaining elements beyond index k - 1 can be ignored.
+
+Approach: Two Pointers
+Time Complexity: O(n)
+Space Complexity: O(1)
+1. One pointer assign to carry the latest valid value
+2. Iterate over the array, and you check current value with the last valid value 
+if both are same (duplicates) -> you skip
+if both are different (valid) -> So you can insert at that position with the current value and move forward
+
+Learning:
+
+
+Mistakes:
+
+
+Code:
+# Two Pointer Approach
+class Solution:
+    def removeDuplicates(self, nums: List[int]) -> int:
+        ans = 0
+        for i in range(1,len(nums)):
+            if nums[i] != nums[ans]:
+                ans = ans+1
+                nums[ans] = nums[i]
+        return ans+1

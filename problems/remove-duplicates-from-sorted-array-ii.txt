@@ -1,0 +1,95 @@
+Title: Remove Duplicates from Sorted Array II
+Date: 2026-07-21
+Difficulty: Medium
+Tags: Array, Two Pointers
+Platform: Leetcode-80
+Favorite: false
+Status: Need Revision
+
+Statement:
+Given an integer array nums sorted in non-decreasing order, remove some duplicates in-place such that each unique element appears at most twice. The relative order of the elements should be kept the same.
+
+Since it is impossible to change the length of the array in some languages, you must instead have the result be placed in the first part of the array nums. More formally, if there are k elements after removing the duplicates, then the first k elements of nums should hold the final result. It does not matter what you leave beyond the first k elements.
+
+Return k after placing the final result in the first k slots of nums.
+
+Do not allocate extra space for another array. You must do this by modifying the input array in-place with O(1) extra memory.
+
+Approach: Two Pointers
+Time Complexity: O(n)
+Space Complexity: O(1)
+Since the problem requires **O(1) extra space**, we cannot use additional data structures like a dictionary or another list.
+
+Instead, we use the **two-pointer** technique:
+
+* **`start`** → points to the position where the next valid element should be written.
+* **`i`** → iterates through the array and reads each element.
+
+Since the array is sorted and each element can appear **at most twice**, we only need to ensure that we never keep **three consecutive occurrences** of the same value.
+
+The first two elements are always valid, so we initialize both pointers accordingly:
+
+* `start = 2`
+* Iterate `i` from `2` to `n - 1`.
+
+For every element, compare it with `nums[start - 2]`.
+
+* If `nums[i] != nums[start - 2]`, the current element can be included. Write it at `nums[start]` and increment `start`.
+* Otherwise, the current element would create a third occurrence, so we simply skip it.
+
+### Example
+
+```
+nums = [0, 0, 0, 1, 1, 1, 2]
+```
+
+Initially:
+
+```
+start = 2
+```
+
+* `i = 2` → `nums[2] = 0`
+
+  * Compare with `nums[start - 2] = nums[0] = 0`
+  * Same value → skip.
+
+* `i = 3` → `nums[3] = 1`
+
+  * Compare with `nums[0] = 0`
+  * Different → write `1` at `nums[2]`, increment `start`.
+
+The process continues until all elements are checked, and `start` represents the length of the modified array containing at most two occurrences of every element.
+
+Learning:
+1. Instead of trying to delete elements, maintain a valid prefix
+Elements in nums[:start] are always valid.
+
+2. Separate the read and write pointers
+A common two-pointer pattern is:
+Read pointer (i) scans every element.
+Write pointer (start) only moves when an element should be kept.
+
+3. Compare against the output, not the input
+One of the biggest insights is that you compare with
+nums[start - 2] instead of nums[i - 2]
+because start tracks the current valid array, while i scans the original array, which may contain skipped elements.
+
+4. When a problem requires O(1) extra space, it often hints that you should reuse the input array rather than allocate another data structure.
+
+Mistakes:
+
+
+Code:
+# Two Pointer Approach
+class Solution:
+    def removeDuplicates(self, nums: List[int]) -> int:
+        n = len(nums)
+        start = 2
+        for i in range(2,n):
+            if nums[i] == nums[start-2]: # Identifying case if inserted then it makes 3 consecutive same number
+                continue
+            else: # If it is safe to , then add the existing number and increment start
+                nums[start] = nums[i]
+                start+=1
+        return start

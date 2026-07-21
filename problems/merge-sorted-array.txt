@@ -1,0 +1,86 @@
+Title: Merge Sorted Array
+Date: 2026-07-20
+Difficulty: Easy
+Tags: Array, Two Pointers, Sorting
+Platform: Leetcode-88
+Favorite: false
+Status: Need Revision
+
+Statement:
+You are given two integer arrays nums1 and nums2, sorted in non-decreasing order, and two integers m and n, representing the number of elements in nums1 and nums2 respectively.
+
+Merge nums1 and nums2 into a single array sorted in non-decreasing order.
+
+The final sorted array should not be returned by the function, but instead be stored inside the array nums1. To accommodate this, nums1 has a length of m + n, where the first m elements denote the elements that should be merged, and the last n elements are set to 0 and should be ignored. nums2 has a length of n.
+
+Approach: Merge Sort logic
+Time Complexity: O(m+n)
+Space Complexity: O(m+n)
+1. i for arr1 , j for arr2 
+2. start from 0 to their respective length, and compare their each element 
+3. Whichever is smaller add it to the temporary array 
+4. Additionally we should not miss any elements right , so we complete i , j and add the elements
+5. Lastly as we have to change in place - then keep in sequentially
+
+Approach: Optimized with O(1) space complexity
+Time Complexity: O(m+n)
+Space Complexity: O(1)
+Instead of maintaining another array
+For this problem arr1 has already m+n elements scope
+So instead of trying out to get smaller elements and fill it from start
+Do the opposite try to find out greater element and store it in answer array and decrement it.
+
+Learning:
+
+
+Mistakes:
+
+
+Code:
+# Space Optimized 
+class Solution:
+    def merge(self, nums1: List[int], m: int, nums2: List[int], n: int) -> None:
+        """
+        Do not return anything, modify nums1 in-place instead.
+        """
+        i = m-1
+        j = n-1
+        k = m + n -1
+        while i>=0 and j>=0:
+            if nums1[i] >= nums2[j]:
+                nums1[k] = nums1[i]
+                i-=1
+            else:
+                nums1[k] = nums2[j]
+                j-=1
+            k-=1
+        # these loops are for exhausted remaining arrays
+        while j>=0:
+            nums1[k] = nums2[j]
+            j-=1
+            k-=1
+        
+
+# Merge Sort Logic
+class Solution:
+    def merge(self, nums1: List[int], m: int, nums2: List[int], n: int) -> None:
+        """
+        Do not return anything, modify nums1 in-place instead.
+        """
+        i = 0
+        j = 0
+        temp = []
+        while i<m and j<n:
+            if nums1[i]<=nums2[j]:
+                temp.append(nums1[i])
+                i+=1
+            else:
+                temp.append(nums2[j])
+                j+=1
+        while i<m:
+            temp.append(nums1[i])
+            i+=1
+        while j<n:
+            temp.append(nums2[j])
+            j+=1
+        nums1 = temp

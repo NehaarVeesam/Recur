@@ -1,0 +1,55 @@
+Title: Shift 2D Grid
+Date: 2026-07-20
+Difficulty: Easy
+Tags: Matrix, Simulation
+Platform: Leetcode-1260
+Favorite: false
+Status: Need Revision
+
+Statement:
+Given a 2D grid of size m x n and an integer k. You need to shift the grid k times.
+
+In one shift operation:
+
+Element at grid[i][j] moves to grid[i][j + 1].
+Element at grid[i][n - 1] moves to grid[i + 1][0].
+Element at grid[m - 1][n - 1] moves to grid[0][0].
+Return the 2D grid after applying shift operation k times.
+
+Approach: Flattern + Construct -> Simulation
+Time Complexity: O(mn)
+Space Complexity: O(mn)
+1. Flatten the matrix into single array 
+2. Rotate it by k times 
+3. Reconstruct the array and return
+
+Learning:
+1. Instead of for loop can be better by using temp = left_half + right_half
+
+Mistakes:
+
+
+Code:
+# Simulation
+class Solution:
+    def shiftGrid(self, grid: List[List[int]], k: int) -> List[List[int]]:
+        rows = len(grid)
+        cols = len(grid[0])
+        k = k % (rows*cols)
+        if k == 0:
+            return grid
+        temp = []
+        for i in range(rows):
+            for j in range(cols):
+                temp.append(grid[i][j])
+        r = len(temp) - k
+        r_half = temp[r:]
+        l_half = temp[:r]
+        temp2 = r_half + l_half
+        start = 0
+        for i in range(rows):
+            for j in range(cols):
+                grid[i][j] = temp2[start]
+                start+=1
+        return grid
+

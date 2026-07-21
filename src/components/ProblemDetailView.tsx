@@ -8,6 +8,8 @@ import {
 } from 'lucide-react';
 import { cn } from '../utils/cn';
 import { SidebarToggle } from './SidebarToggle';
+import { Markdown } from './Markdown';
+import { MarkdownTextarea } from './MarkdownTextarea';
 import { titleToFilename, isDraftFilename } from '../utils/filename';
 import { saveStoredDraft, loadStoredDraft, clearStoredDraft } from '../utils/draftStorage';
 import { hasUnsavedWork, confirmDiscard } from '../utils/unsavedChanges';
@@ -33,7 +35,7 @@ interface OverviewDraft {
 const inputClass =
   'w-full bg-[#010101] border border-white/10 text-sm text-slate-300 rounded-lg px-3 py-2 focus:outline-none focus:border-indigo-500/50';
 const textareaClass =
-  'w-full bg-[#010101] border border-white/10 text-sm text-slate-300 rounded-lg p-3 min-h-[160px] resize-y focus:outline-none focus:border-indigo-500/50 leading-relaxed';
+  'w-full bg-[#010101] border border-white/10 text-sm font-mono text-slate-300 rounded-lg p-3 min-h-[160px] resize-y focus:outline-none focus:border-indigo-500/50 leading-relaxed';
 
 const TAB_ORDER: TabId[] = ['overview', 'approach', 'learning', 'mistakes', 'code', 'revision'];
 
@@ -528,7 +530,7 @@ export const ProblemDetailView: React.FC = () => {
                   </div>
                   <div>
                     <label className="text-[10px] uppercase tracking-widest text-slate-500 font-bold mb-2 block">Problem Statement</label>
-                    <textarea className={textareaClass} value={overviewDraft.statement} onChange={e => setOverviewDraft({ ...overviewDraft, statement: e.target.value })} placeholder="Describe the problem here..." />
+                    <MarkdownTextarea className={textareaClass} value={overviewDraft.statement} onChange={v => setOverviewDraft({ ...overviewDraft, statement: v })} placeholder="Describe the problem here..." />
                   </div>
                 </div>
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -562,9 +564,11 @@ export const ProblemDetailView: React.FC = () => {
               <>
                 <div className="bg-white/5 border border-white/5 rounded-xl p-6">
                   <h4 className="text-sm font-semibold text-slate-400 uppercase tracking-widest mb-4">Problem Statement</h4>
-                  <div className="prose prose-invert max-w-none text-slate-300 leading-relaxed whitespace-pre-wrap">
-                    {p.statement || <span className="text-slate-600 italic">No problem statement recorded yet.</span>}
-                  </div>
+                  {p.statement ? (
+                    <Markdown content={p.statement} />
+                  ) : (
+                    <span className="text-slate-600 italic">No problem statement recorded yet.</span>
+                  )}
                 </div>
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <div className="bg-white/5 border border-white/5 rounded-xl p-6">
@@ -632,7 +636,7 @@ export const ProblemDetailView: React.FC = () => {
                   </div>
                   <div>
                     <label className="text-[10px] uppercase tracking-widest text-slate-500 font-bold mb-2 block">Explanation</label>
-                    <textarea className={textareaClass} value={app.content} onChange={e => updateApproach(idx, 'content', e.target.value)} placeholder="Explain your approach here..." />
+                    <MarkdownTextarea className={textareaClass} value={app.content} onChange={v => updateApproach(idx, 'content', v)} placeholder="Explain your approach here..." />
                   </div>
                 </div>
               ))
@@ -658,9 +662,11 @@ export const ProblemDetailView: React.FC = () => {
                       )}
                     </div>
                   </div>
-                  <div className="prose prose-invert max-w-none text-slate-300 leading-relaxed whitespace-pre-wrap">
-                    {app.content || <span className="text-slate-600 italic">No description provided.</span>}
-                  </div>
+                  {app.content ? (
+                    <Markdown content={app.content} />
+                  ) : (
+                    <span className="text-slate-600 italic">No description provided.</span>
+                  )}
                 </div>
               ))
             ) : (
@@ -683,11 +689,13 @@ export const ProblemDetailView: React.FC = () => {
                 <BookOpenIcon className="w-4 h-4"/> Key Takeaways
               </h4>
               {isEditing('learning') && learningDraft !== null ? (
-                <textarea className={cn(textareaClass, 'min-h-[320px]')} value={learningDraft} onChange={e => setLearningDraft(e.target.value)} placeholder="What did you learn from this problem?" />
+                <MarkdownTextarea className={cn(textareaClass, 'min-h-[320px]')} value={learningDraft} onChange={setLearningDraft} placeholder="What did you learn from this problem?" />
               ) : (
-                <div className="prose prose-invert max-w-none text-slate-300 leading-relaxed whitespace-pre-wrap">
-                  {p.learning || <span className="text-slate-600 italic">No learning notes recorded yet.</span>}
-                </div>
+                p.learning ? (
+                  <Markdown content={p.learning} />
+                ) : (
+                  <span className="text-slate-600 italic">No learning notes recorded yet.</span>
+                )
               )}
             </div>
           </div>
@@ -704,11 +712,13 @@ export const ProblemDetailView: React.FC = () => {
                 <AlertTriangleIcon className="w-4 h-4 text-orange-400"/> Mistakes Log
               </h4>
               {isEditing('mistakes') && mistakesDraft !== null ? (
-                <textarea className={cn(textareaClass, 'min-h-[320px]')} value={mistakesDraft} onChange={e => setMistakesDraft(e.target.value)} placeholder="Wrong approaches, bugs, edge cases missed..." />
+                <MarkdownTextarea className={cn(textareaClass, 'min-h-[320px]')} value={mistakesDraft} onChange={setMistakesDraft} placeholder="Wrong approaches, bugs, edge cases missed..." />
               ) : (
-                <div className="prose prose-invert max-w-none text-slate-300 leading-relaxed whitespace-pre-wrap">
-                  {p.mistakes || <span className="text-slate-600 italic">No mistakes logged yet.</span>}
-                </div>
+                p.mistakes ? (
+                  <Markdown content={p.mistakes} />
+                ) : (
+                  <span className="text-slate-600 italic">No mistakes logged yet.</span>
+                )
               )}
             </div>
           </div>

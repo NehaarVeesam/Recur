@@ -1,0 +1,45 @@
+Title: Minimum Size Subarray Sum
+Date: 2026-07-21
+Difficulty: Medium
+Tags: Array, Sliding Window, Prefix Sum, Binary Search
+Platform: Leetcode-209
+Favorite: false
+Status: Need Revision
+
+Statement:
+Given an array of positive integers nums and a positive integer target, return the minimal length of a subarray whose sum is greater than or equal to target. If there is no such subarray, return 0 instead.
+
+Approach: Sliding Window
+Time Complexity: O(n)
+Space Complexity: O(1)
+1. Initialize start = 0
+2. Under each iteration
+- Increment the sum
+- Whenever the sum is greater than equal to target
+- Start shrinking the window 
+- [as we require minimum size window of >=] therefore we consider everytime the minimum of ans , i-start+1 -> basically the window size
+- return the ans accordingly
+
+Learning:
+
+
+Mistakes:
+1. Overlooked the condition where sum can be greater than equal to
+
+Code:
+# Sliding window approach
+class Solution:
+    def minSubArrayLen(self, target: int, nums: List[int]) -> int:
+        ans = 10000000
+        n = len(nums)
+        s = 0
+        start = 0
+        for i in range(n):
+            s += nums[i]
+            while s >= target:
+                s-= nums[start]
+                ans = min(ans,i-start+1)
+                start+=1
+        if ans == 10000000:
+            return 0
+        return ans

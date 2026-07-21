@@ -1,0 +1,93 @@
+Title: Rotate Array
+Date: 2026-07-20
+Difficulty: Medium
+Tags: Array, Math, Two Pointers
+Platform: Leetcode-189
+Favorite: false
+Status: Need Revision
+
+Statement:
+Given an integer array nums, rotate the array to the right by k steps, where k is non-negative.
+
+Approach: Slicing
+Time Complexity: O(n)
+Space Complexity: O(n)
+1. Simply find out the break point and save left and right list
+2. And Update the given array
+
+Approach: Reversing
+Time Complexity: O(n)
+Space Complexity: O(1)
+1. Update k with k%n
+2. As we will be shifting the entire array one step to right , the ending elements would be coming at start , which essentially means reversing 
+3. Reverse entire list
+4. Reverse first k elements because the kth element would become 1st
+5. Reverse rest n-k elements to maintain the original order
+
+Reverse everything → Fix the first part → Fix the second part.
+
+Learning:
+1. Whenever you see
+     O(1) space
+     In-place
+     Arrays
+
+your brain should start asking:
+"What operations can I perform without allocating memory?"
+
+Possible operations are only:
+    swap
+    reverse
+    cyclic replacement
+    two pointers
+
+2. List slicing creates a brand-new reversed list -> Never it does in place
+3. Reverse does in place
+
+4. if we want to reverse using slicing in place -> nums[:r] = nums[:r][::-1]
+5. .reverse() doesn't work on slice because slicing does create a new copy
+6. nums[:k] = reversed(nums[:k])
+
+| Feature             | Slicing (`[::-1]`)     | `.reverse()`    | `reversed()`             |
+| ------------------- | ---------------------- | --------------- | ------------------------ |
+| **Returns**         | A new list             | `None`          | An iterator              |
+| **Original List**   | Unchanged              | Modified        | Unchanged                |
+| **Memory Usage**    | High (creates a copy)  | Low (in-place)  | Extremely low (iterator) |
+| **Example**         | `new_list = lst[::-1]` | `lst.reverse()` | `rev = reversed(lst)`    |
+| **Result Type**     | `list`                 | `None`          | `list_reverseiterator`   |
+| **Convert to List** | Not needed             | Not need        |                          |
+
+Mistakes:
+
+
+Code:
+# Reversing
+class Solution:
+    def rotate(self, nums: List[int], k: int) -> None:
+        """
+        Do not return anything, modify nums in-place instead.
+        """
+        n = len(nums)
+        k = k % n
+        nums.reverse()
+        nums[:k] = nums[:k][::-1]
+        nums[k:] = nums[k:][::-1]
+
+# Slicing
+class Solution:
+    def rotate(self, nums: List[int], k: int) -> None:
+        """
+        Do not return anything, modify nums in-place instead.
+        """
+        n = len(nums)
+        k = k % n
+        r = n - k
+        r_half = nums[r:]
+        l_half = nums[:r]
+        start = 0
+        for i in r_half:
+            nums[start] = i
+            start+=1
+        for j in l_half:
+            nums[start] = j
+            start+=1
